@@ -1,0 +1,23 @@
+{
+  "name": "slidein",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Open-source DM automation for Instagram, Messenger & more — self-hosted ManyChat alternative",
+  "license": "MIT",
+  "author": "molt-oss",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/molt-oss/slidein.git"
+  },
+  "scripts": {
+    "dev": "pnpm --filter worker dev",
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "packageManager": "pnpm@9.15.0"
+}
