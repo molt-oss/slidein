@@ -92,32 +92,26 @@ async function main() {
   header('Step 3/5: データベース作成');
   console.log('Cloudflare D1 にデータベースを作成するよ...\n');
 
-  const d1Output = run('npx wrangler d1 create slidein-db 2>&1', { silent: true, ignoreError: true });
+  // まず作成を試みる（既に存在してもOK）
+  run('npx wrangler d1 create slidein-db 2>&1', { silent: true, ignoreError: true });
 
+  // d1 list --json で確実にIDを取得（作成直後でも既存でも動く）
   let databaseId = '';
-
-  // すでに存在する場合
-  if (d1Output.includes('already exists')) {
-    console.log('⚡ データベースは既に存在してるね！IDを取得するよ...');
+  try {
     const listOutput = run('npx wrangler d1 list --json 2>&1', { silent: true });
-    try {
-      const dbs = JSON.parse(listOutput);
-      const db = dbs.find(d => d.name === 'slidein-db');
-      if (db) databaseId = db.uuid;
-    } catch {}
-  } else {
-    // 新規作成の場合、出力からdatabase_idを抽出
-    const match = d1Output.match(/database_id\s*=\s*"([^"]+)"/);
-    if (match) databaseId = match[1];
-  }
+    const dbs = JSON.parse(listOutput);
+    const db = dbs.find(d => d.name === 'slidein-db');
+    if (db) databaseId = db.uuid || db.id;
+  } catch {}
 
   if (!databaseId) {
-    console.error('❌ データベースIDの取得に失敗。手動で確認してね:');
+    console.error('❌ データベースIDの自動取得に失敗。');
+    console.error('   以下のコマンドで手動確認してね:');
     console.error('   npx wrangler d1 list');
     process.exit(1);
   }
 
-  console.log(`✅ データベースID: ${databaseId}`);
+  console.log(`✅ データベースID: ${databaseId}（自動取得）`);
 
   // wrangler.toml に書き込み
   let toml = readFileSync(TOML_PATH, 'utf8');
