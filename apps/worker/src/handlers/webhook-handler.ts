@@ -51,10 +51,26 @@ webhook.post("/webhook", async (c) => {
   }
 
   // ペイロードパース
-  const parseResult = WebhookPayloadSchema.safeParse(JSON.parse(rawBody));
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(rawBody);
+  } catch {
+    structuredLog("error", "Webhook body is not valid JSON", {
+      body: rawBody.slice(0, 500),
+    });
+    return c.text("Bad Request", 400);
+  }
+
+  // デバッグ: 受信ペイロードをログ出力
+  structuredLog("info", "Webhook payload received", {
+    body: rawBody.slice(0, 1000),
+  });
+
+  const parseResult = WebhookPayloadSchema.safeParse(parsed);
   if (!parseResult.success) {
     structuredLog("error", "Invalid webhook payload", {
       errors: parseResult.error.flatten(),
+      rawKeys: Object.keys(parsed as Record<string, unknown>),
     });
     return c.text("Bad Request", 400);
   }
