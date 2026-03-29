@@ -231,7 +231,14 @@ async function main() {
     p.log.info("Deploy manually: cd apps/worker && npx wrangler deploy");
   }
 
-  // ── 7. 完了 ─────────────────────────────────────────────────────
+  // ── 7. Dashboard .env.local を自動生成 ───────────────────────────
+  const WEB_DIR = resolve(ROOT, "apps/web");
+  const envLocalPath = resolve(WEB_DIR, ".env.local");
+  const envContent = `API_URL=${workerUrl}\nAPI_KEY=${adminApiKey}\n`;
+  writeFileSync(envLocalPath, envContent);
+  p.log.success("apps/web/.env.local created automatically");
+
+  // ── 8. 完了 ─────────────────────────────────────────────────────
   p.note(
     [
       `Worker URL:          ${workerUrl}`,
