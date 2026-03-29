@@ -20,7 +20,7 @@ export default async function DashboardPage() {
     rules.data.length === 0 &&
     scenarios.data.length === 0;
 
-  // Recent contacts sorted by lastMessageAt
+  // 最近のコンタクト（lastMessageAtでソート）
   const recentContacts = [...contacts.data]
     .filter((c) => c.lastMessageAt)
     .sort(
@@ -32,27 +32,27 @@ export default async function DashboardPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold">Dashboard</h1>
+      <h1 className="text-2xl font-bold">ダッシュボード</h1>
 
       {hasError && (
         <div className="mt-4 rounded-md border border-amber-700/50 bg-amber-900/20 px-4 py-3 text-sm text-amber-400">
-          ⚠️ Could not connect to Worker API. Showing cached/empty data.
+          ⚠️ Worker APIに接続できませんでした。キャッシュまたは空データを表示しています。
         </div>
       )}
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <StatCard
-          label="Total Contacts"
+          label="コンタクト数"
           value={contacts.data.length}
           icon="👥"
         />
         <StatCard
-          label="Active Keyword Rules"
+          label="有効なキーワードルール"
           value={activeRules}
           icon="🔑"
         />
         <StatCard
-          label="Active Scenarios"
+          label="有効なシナリオ"
           value={activeScenarios}
           icon="🔄"
         />
@@ -61,10 +61,10 @@ export default async function DashboardPage() {
       {isEmpty && !hasError && (
         <div className="mt-8 rounded-lg border border-zinc-800 bg-zinc-900/50 p-6">
           <h2 className="text-lg font-semibold text-zinc-200">
-            🚀 Getting Started
+            🚀 はじめよう
           </h2>
           <p className="mt-2 text-sm text-zinc-400">
-            Welcome to slidein! Follow these steps to set up your DM automation:
+            slideinへようこそ！以下の手順でDM自動化をセットアップしよう：
           </p>
           <ol className="mt-4 space-y-4">
             <li className="flex items-start gap-3">
@@ -73,11 +73,10 @@ export default async function DashboardPage() {
               </span>
               <div>
                 <p className="font-medium text-zinc-200">
-                  Deploy the Worker to Cloudflare
+                  WorkerをCloudflareにデプロイ
                 </p>
                 <p className="mt-1 text-xs text-zinc-500">
-                  Configure your Cloudflare account and deploy the Worker with
-                  your D1 database.
+                  Cloudflareアカウントを設定して、D1データベースと一緒にWorkerをデプロイしてね。
                 </p>
                 <a
                   href="https://developers.cloudflare.com/workers/get-started/guide/"
@@ -85,7 +84,7 @@ export default async function DashboardPage() {
                   rel="noopener noreferrer"
                   className="mt-2 inline-block rounded-md border border-zinc-700 px-3 py-1.5 text-xs text-zinc-300 transition-colors hover:bg-zinc-800"
                 >
-                  Cloudflare Workers Docs →
+                  Cloudflare Workers ドキュメント →
                 </a>
               </div>
             </li>
@@ -95,11 +94,10 @@ export default async function DashboardPage() {
               </span>
               <div>
                 <p className="font-medium text-zinc-200">
-                  Create a Meta App
+                  Metaアプリを作成
                 </p>
                 <p className="mt-1 text-xs text-zinc-500">
-                  Set up a Meta App with Instagram API access and configure your
-                  Webhook URL.
+                  Instagram APIアクセス付きのMetaアプリを作成して、WebhookURLを設定しよう。
                 </p>
                 <a
                   href="https://developers.facebook.com/apps/"
@@ -107,7 +105,7 @@ export default async function DashboardPage() {
                   rel="noopener noreferrer"
                   className="mt-2 inline-block rounded-md border border-zinc-700 px-3 py-1.5 text-xs text-zinc-300 transition-colors hover:bg-zinc-800"
                 >
-                  Meta Developer Portal →
+                  Meta開発者ポータル →
                 </a>
               </div>
             </li>
@@ -117,17 +115,16 @@ export default async function DashboardPage() {
               </span>
               <div>
                 <p className="font-medium text-zinc-200">
-                  Create your first keyword rule
+                  最初のキーワードルールを作成
                 </p>
                 <p className="mt-1 text-xs text-zinc-500">
-                  Set up a keyword rule to automatically respond to DMs
-                  containing specific keywords.
+                  キーワードルールを作成して、特定のキーワードを含むDMに自動返信しよう！
                 </p>
                 <a
                   href="/keywords"
                   className="mt-2 inline-block rounded-md bg-brand-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-brand-700"
                 >
-                  Create Keyword Rule →
+                  キーワードルールを作成 →
                 </a>
               </div>
             </li>
@@ -136,10 +133,10 @@ export default async function DashboardPage() {
       )}
 
       <h2 className="mt-8 text-lg font-semibold text-zinc-300">
-        Recent Activity
+        最近のアクティビティ
       </h2>
       {recentContacts.length === 0 ? (
-        <p className="mt-3 text-sm text-zinc-500">No recent messages.</p>
+        <p className="mt-3 text-sm text-zinc-500">まだメッセージがないよ</p>
       ) : (
         <div className="mt-3 space-y-2">
           {recentContacts.map((c) => (

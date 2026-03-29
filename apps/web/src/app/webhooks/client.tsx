@@ -37,9 +37,9 @@ export function WebhooksClient({
       });
       setShowForm(false);
       router.refresh();
-      showToast("Webhook endpoint created", "success");
+      showToast("Webhookエンドポイントを作成しました", "success");
     } catch (err) {
-      showToast(err instanceof Error ? err.message : "Failed to create");
+      showToast(err instanceof Error ? err.message : "作成に失敗しました");
     } finally {
       setLoading(false);
     }
@@ -51,9 +51,9 @@ export function WebhooksClient({
       await deleteWebhookEndpoint(deleteTarget);
       setDeleteTarget(null);
       router.refresh();
-      showToast("Webhook endpoint deleted", "success");
+      showToast("Webhookエンドポイントを削除しました", "success");
     } catch (err) {
-      showToast(err instanceof Error ? err.message : "Failed to delete");
+      showToast(err instanceof Error ? err.message : "削除に失敗しました");
     }
   };
 
@@ -69,7 +69,7 @@ export function WebhooksClient({
     },
     {
       key: "events",
-      label: "Events",
+      label: "イベント",
       render: (r: WebhookEndpoint) => (
         <div className="flex flex-wrap gap-1">
           {r.events.map((ev) => (
@@ -80,16 +80,16 @@ export function WebhooksClient({
     },
     {
       key: "enabled",
-      label: "Status",
+      label: "ステータス",
       render: (r: WebhookEndpoint) => (
         <Badge variant={r.enabled ? "success" : "default"}>
-          {r.enabled ? "Active" : "Disabled"}
+          {r.enabled ? "有効" : "無効"}
         </Badge>
       ),
     },
     {
       key: "createdAt",
-      label: "Created",
+      label: "作成日",
       render: (r: WebhookEndpoint) => (
         <span className="text-xs text-zinc-500">
           {new Date(r.createdAt).toLocaleString()}
@@ -104,7 +104,7 @@ export function WebhooksClient({
           onClick={() => setDeleteTarget(r.id)}
           className="text-xs text-red-400 hover:text-red-300"
         >
-          Delete
+          削除
         </button>
       ),
     },
@@ -114,13 +114,13 @@ export function WebhooksClient({
     <>
       <div className="mt-4 flex items-center justify-between">
         <p className="text-sm text-zinc-400">
-          {initialEndpoints.length} endpoint(s)
+          {initialEndpoints.length} 件のエンドポイント
         </p>
         <button
           onClick={() => setShowForm(!showForm)}
           className="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-700"
         >
-          {showForm ? "Cancel" : "+ New Endpoint"}
+          {showForm ? "キャンセル" : "+ 新規エンドポイント"}
         </button>
       </div>
 
@@ -141,7 +141,7 @@ export function WebhooksClient({
           </div>
           <div>
             <label htmlFor="wh-events" className="mb-1 block text-xs text-zinc-400">
-              Events (comma-separated)
+              イベント（カンマ区切り）
             </label>
             <input
               id="wh-events"
@@ -152,11 +152,11 @@ export function WebhooksClient({
             />
           </div>
           <div>
-            <label htmlFor="wh-secret" className="mb-1 block text-xs text-zinc-400">Secret (HMAC key)</label>
+            <label htmlFor="wh-secret" className="mb-1 block text-xs text-zinc-400">シークレット（HMACキー）</label>
             <input
               id="wh-secret"
               name="secret"
-              placeholder="your-webhook-secret"
+              placeholder="Webhookシークレットを入力..."
               required
               minLength={8}
               className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-500"
@@ -167,7 +167,7 @@ export function WebhooksClient({
             disabled={loading}
             className="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
           >
-            {loading ? "Creating..." : "Create Endpoint"}
+            {loading ? "作成中..." : "エンドポイントを作成"}
           </button>
         </form>
       )}
@@ -177,14 +177,14 @@ export function WebhooksClient({
           columns={columns}
           rows={initialEndpoints}
           keyField="id"
-          emptyMessage="No webhook endpoints yet."
+          emptyMessage="Webhookエンドポイントを作成して、外部サービスにイベントを通知しよう！"
         />
       </div>
 
       <ConfirmDialog
         open={!!deleteTarget}
-        title="Delete Webhook Endpoint"
-        message="Are you sure? This action cannot be undone."
+        title="Webhookエンドポイントの削除"
+        message="本当に削除する？この操作は取り消せないよ。"
         onConfirm={handleDelete}
         onCancel={() => setDeleteTarget(null)}
       />

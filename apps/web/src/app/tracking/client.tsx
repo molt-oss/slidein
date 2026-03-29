@@ -30,9 +30,9 @@ export function TrackingClient({
       });
       setShowForm(false);
       router.refresh();
-      showToast("Tracking link created", "success");
+      showToast("トラッキングリンクを作成しました", "success");
     } catch (err) {
-      showToast(err instanceof Error ? err.message : "Failed to create");
+      showToast(err instanceof Error ? err.message : "作成に失敗しました");
     } finally {
       setLoading(false);
     }
@@ -44,16 +44,16 @@ export function TrackingClient({
       await deleteTrackedLink(deleteTarget);
       setDeleteTarget(null);
       router.refresh();
-      showToast("Tracking link deleted", "success");
+      showToast("トラッキングリンクを削除しました", "success");
     } catch (err) {
-      showToast(err instanceof Error ? err.message : "Failed to delete");
+      showToast(err instanceof Error ? err.message : "削除に失敗しました");
     }
   };
 
   const columns = [
     {
       key: "shortCode",
-      label: "Short Code",
+      label: "ショートコード",
       render: (r: TrackedLink) => (
         <code className="rounded bg-zinc-800 px-2 py-1 text-xs text-brand-400">
           /t/{r.shortCode}
@@ -62,7 +62,7 @@ export function TrackingClient({
     },
     {
       key: "originalUrl",
-      label: "Original URL",
+      label: "元URL",
       render: (r: TrackedLink) => (
         <span className="max-w-[200px] truncate text-sm text-zinc-300" title={r.originalUrl}>
           {r.originalUrl}
@@ -71,21 +71,21 @@ export function TrackingClient({
     },
     {
       key: "contactTag",
-      label: "Tag",
+      label: "タグ",
       render: (r: TrackedLink) => (
         <span className="text-sm text-zinc-400">{r.contactTag ?? "—"}</span>
       ),
     },
     {
       key: "clickCount",
-      label: "Clicks",
+      label: "クリック数",
       render: (r: TrackedLink) => (
         <span className="text-sm font-medium text-zinc-200">{r.clickCount}</span>
       ),
     },
     {
       key: "createdAt",
-      label: "Created",
+      label: "作成日",
       render: (r: TrackedLink) => (
         <span className="text-xs text-zinc-500">
           {new Date(r.createdAt).toLocaleString()}
@@ -100,7 +100,7 @@ export function TrackingClient({
           onClick={() => setDeleteTarget(r.id)}
           className="text-xs text-red-400 hover:text-red-300"
         >
-          Delete
+          削除
         </button>
       ),
     },
@@ -110,13 +110,13 @@ export function TrackingClient({
     <>
       <div className="mt-4 flex items-center justify-between">
         <p className="text-sm text-zinc-400">
-          {initialLinks.length} tracking link(s)
+          {initialLinks.length} 件のリンク
         </p>
         <button
           onClick={() => setShowForm(!showForm)}
           className="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-700"
         >
-          {showForm ? "Cancel" : "+ New Link"}
+          {showForm ? "キャンセル" : "+ 新規リンク"}
         </button>
       </div>
 
@@ -126,7 +126,7 @@ export function TrackingClient({
           className="mt-4 rounded-lg border border-zinc-800 bg-zinc-900 p-4 space-y-3"
         >
           <div>
-            <label htmlFor="tl-url" className="mb-1 block text-xs text-zinc-400">Original URL</label>
+            <label htmlFor="tl-url" className="mb-1 block text-xs text-zinc-400">元URL</label>
             <input
               id="tl-url"
               name="originalUrl"
@@ -137,20 +137,20 @@ export function TrackingClient({
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
-              <label htmlFor="tl-tag" className="mb-1 block text-xs text-zinc-400">Contact Tag (optional)</label>
+              <label htmlFor="tl-tag" className="mb-1 block text-xs text-zinc-400">コンタクトタグ（任意）</label>
               <input
                 id="tl-tag"
                 name="contactTag"
-                placeholder="e.g. clicked-promo"
+                placeholder="例: clicked-promo"
                 className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-500"
               />
             </div>
             <div>
-              <label htmlFor="tl-scenario" className="mb-1 block text-xs text-zinc-400">Scenario ID (optional)</label>
+              <label htmlFor="tl-scenario" className="mb-1 block text-xs text-zinc-400">シナリオID（任意）</label>
               <input
                 id="tl-scenario"
                 name="scenarioId"
-                placeholder="Scenario ID"
+                placeholder="シナリオID"
                 className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-500"
               />
             </div>
@@ -160,7 +160,7 @@ export function TrackingClient({
             disabled={loading}
             className="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
           >
-            {loading ? "Creating..." : "Create Link"}
+            {loading ? "作成中..." : "リンクを作成"}
           </button>
         </form>
       )}
@@ -170,14 +170,14 @@ export function TrackingClient({
           columns={columns}
           rows={initialLinks}
           keyField="id"
-          emptyMessage="No tracking links yet."
+          emptyMessage="トラッキングリンクを作成して、クリック計測を始めよう！"
         />
       </div>
 
       <ConfirmDialog
         open={!!deleteTarget}
-        title="Delete Tracking Link"
-        message="Are you sure? This action cannot be undone."
+        title="トラッキングリンクの削除"
+        message="本当に削除する？この操作は取り消せないよ。"
         onConfirm={handleDelete}
         onCancel={() => setDeleteTarget(null)}
       />

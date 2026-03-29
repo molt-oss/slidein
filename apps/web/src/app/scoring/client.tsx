@@ -13,10 +13,10 @@ import {
 import { useToast } from "@/components/toast";
 
 const EVENT_LABELS: Record<string, string> = {
-  message_received: "Message Received",
-  keyword_matched: "Keyword Matched",
-  link_clicked: "Link Clicked",
-  scenario_completed: "Scenario Completed",
+  message_received: "メッセージ受信",
+  keyword_matched: "キーワードマッチ",
+  link_clicked: "リンククリック",
+  scenario_completed: "シナリオ完了",
 };
 
 export function ScoringClient({
@@ -41,9 +41,9 @@ export function ScoringClient({
       });
       setShowForm(false);
       router.refresh();
-      showToast("Scoring rule created", "success");
+      showToast("スコアリングルールを作成しました", "success");
     } catch (err) {
-      showToast(err instanceof Error ? err.message : "Failed to create");
+      showToast(err instanceof Error ? err.message : "作成に失敗しました");
     } finally {
       setLoading(false);
     }
@@ -55,23 +55,23 @@ export function ScoringClient({
       await deleteScoringRule(deleteTarget);
       setDeleteTarget(null);
       router.refresh();
-      showToast("Scoring rule deleted", "success");
+      showToast("スコアリングルールを削除しました", "success");
     } catch (err) {
-      showToast(err instanceof Error ? err.message : "Failed to delete");
+      showToast(err instanceof Error ? err.message : "削除に失敗しました");
     }
   };
 
   const columns = [
     {
       key: "eventType",
-      label: "Event",
+      label: "イベント",
       render: (r: ScoringRule) => (
         <Badge>{EVENT_LABELS[r.eventType] ?? r.eventType}</Badge>
       ),
     },
     {
       key: "points",
-      label: "Points",
+      label: "ポイント",
       render: (r: ScoringRule) => (
         <span className="font-medium text-zinc-200">
           {r.points > 0 ? `+${r.points}` : r.points}
@@ -80,16 +80,16 @@ export function ScoringClient({
     },
     {
       key: "enabled",
-      label: "Status",
+      label: "ステータス",
       render: (r: ScoringRule) => (
         <Badge variant={r.enabled ? "success" : "warning"}>
-          {r.enabled ? "Active" : "Disabled"}
+          {r.enabled ? "有効" : "無効"}
         </Badge>
       ),
     },
     {
       key: "createdAt",
-      label: "Created",
+      label: "作成日",
       render: (r: ScoringRule) => (
         <span className="text-xs text-zinc-500">
           {new Date(r.createdAt).toLocaleDateString()}
@@ -104,7 +104,7 @@ export function ScoringClient({
           onClick={() => setDeleteTarget(r.id)}
           className="text-xs text-red-400 hover:text-red-300"
         >
-          Delete
+          削除
         </button>
       ),
     },
@@ -114,13 +114,13 @@ export function ScoringClient({
     <>
       <div className="mt-4 flex items-center justify-between">
         <p className="text-sm text-zinc-400">
-          {initialRules.length} rule(s)
+          {initialRules.length} 件のルール
         </p>
         <button
           onClick={() => setShowForm(!showForm)}
           className="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-700"
         >
-          {showForm ? "Cancel" : "+ New Rule"}
+          {showForm ? "キャンセル" : "+ 新規ルール"}
         </button>
       </div>
 
@@ -131,20 +131,20 @@ export function ScoringClient({
         >
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
-              <label htmlFor="sr-eventType" className="mb-1 block text-xs text-zinc-400">Event Type</label>
+              <label htmlFor="sr-eventType" className="mb-1 block text-xs text-zinc-400">イベントタイプ</label>
               <select
                 id="sr-eventType"
                 name="eventType"
                 className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100"
               >
-                <option value="message_received">Message Received</option>
-                <option value="keyword_matched">Keyword Matched</option>
-                <option value="link_clicked">Link Clicked</option>
-                <option value="scenario_completed">Scenario Completed</option>
+                <option value="message_received">メッセージ受信</option>
+                <option value="keyword_matched">キーワードマッチ</option>
+                <option value="link_clicked">リンククリック</option>
+                <option value="scenario_completed">シナリオ完了</option>
               </select>
             </div>
             <div>
-              <label htmlFor="sr-points" className="mb-1 block text-xs text-zinc-400">Points</label>
+              <label htmlFor="sr-points" className="mb-1 block text-xs text-zinc-400">ポイント</label>
               <input
                 id="sr-points"
                 name="points"
@@ -160,7 +160,7 @@ export function ScoringClient({
             disabled={loading}
             className="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
           >
-            {loading ? "Creating..." : "Create Rule"}
+            {loading ? "作成中..." : "ルールを作成"}
           </button>
         </form>
       )}
@@ -170,14 +170,14 @@ export function ScoringClient({
           columns={columns}
           rows={initialRules}
           keyField="id"
-          emptyMessage="No scoring rules yet."
+          emptyMessage="スコアリングルールを作成して、コンタクトの行動をスコア化しよう！"
         />
       </div>
 
       <ConfirmDialog
         open={!!deleteTarget}
-        title="Delete Scoring Rule"
-        message="Are you sure? This action cannot be undone."
+        title="スコアリングルールの削除"
+        message="本当に削除する？この操作は取り消せないよ。"
         onConfirm={handleDelete}
         onCancel={() => setDeleteTarget(null)}
       />

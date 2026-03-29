@@ -6,20 +6,20 @@ import { useState } from "react";
 import { clsx } from "clsx";
 
 const NAV_ITEMS = [
-  { href: "/", label: "Dashboard", icon: "📊" },
-  { href: "/keywords", label: "Keywords", icon: "🔑" },
-  { href: "/triggers", label: "Comment Triggers", icon: "💬" },
-  { href: "/scenarios", label: "Scenarios", icon: "🔄" },
-  { href: "/broadcasts", label: "Broadcasts", icon: "📢" },
-  { href: "/contacts", label: "Contacts", icon: "👥" },
-  { href: "/scoring", label: "Scoring", icon: "⭐" },
-  { href: "/automations", label: "Automations", icon: "⚡" },
-  { href: "/tracking", label: "Tracking", icon: "🔗" },
-  { href: "/webhooks", label: "Webhooks", icon: "🪝" },
-  { href: "/conversions", label: "Conversions", icon: "🎯" },
-  { href: "/forms", label: "Forms", icon: "📝" },
-  { href: "/ai", label: "AI Auto-Reply", icon: "🤖" },
-  { href: "/settings", label: "Settings", icon: "⚙️" },
+  { href: "/", label: "ダッシュボード", icon: "📊" },
+  { href: "/keywords", label: "キーワード", icon: "🔑" },
+  { href: "/triggers", label: "コメントトリガー", icon: "💬" },
+  { href: "/scenarios", label: "シナリオ", icon: "🔄" },
+  { href: "/broadcasts", label: "ブロードキャスト", icon: "📢" },
+  { href: "/contacts", label: "コンタクト", icon: "👥" },
+  { href: "/scoring", label: "スコアリング", icon: "⭐" },
+  { href: "/automations", label: "自動化ルール", icon: "⚡" },
+  { href: "/tracking", label: "トラッキング", icon: "🔗" },
+  { href: "/webhooks", label: "Webhook", icon: "🪝" },
+  { href: "/conversions", label: "CV計測", icon: "🎯" },
+  { href: "/forms", label: "フォーム", icon: "📝" },
+  { href: "/ai", label: "AI自動応答", icon: "🤖" },
+  { href: "/settings", label: "設定", icon: "⚙️" },
 ];
 
 export function Sidebar() {
@@ -31,16 +31,16 @@ export function Sidebar() {
 
   return (
     <>
-      {/* Mobile hamburger */}
+      {/* モバイルハンバーガー */}
       <button
         onClick={() => setOpen(!open)}
         className="fixed top-4 left-4 z-50 rounded-md bg-zinc-800 p-2 text-zinc-100 md:hidden"
-        aria-label="Toggle menu"
+        aria-label="メニューを開閉"
       >
         {open ? "✕" : "☰"}
       </button>
 
-      {/* Overlay */}
+      {/* オーバーレイ */}
       {open && (
         <div
           className="fixed inset-0 z-30 bg-black/50 md:hidden"
@@ -48,7 +48,7 @@ export function Sidebar() {
         />
       )}
 
-      {/* Sidebar */}
+      {/* サイドバー */}
       <aside
         className={clsx(
           "fixed inset-y-0 left-0 z-40 flex w-60 flex-col border-r border-zinc-800 bg-zinc-950 transition-transform md:static md:translate-x-0",
@@ -57,7 +57,7 @@ export function Sidebar() {
       >
         <div className="flex h-14 items-center gap-2 border-b border-zinc-800 px-5">
           <span className="text-xl font-bold text-brand-400">slidein</span>
-          <span className="text-xs text-zinc-500">admin</span>
+          <span className="text-xs text-zinc-500">管理画面</span>
         </div>
 
         <nav className="flex-1 space-y-1 p-3">

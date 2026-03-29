@@ -35,9 +35,9 @@ export function KeywordRulesClient({
       });
       setShowForm(false);
       router.refresh();
-      showToast("Keyword rule created", "success");
+      showToast("キーワードルールを作成しました", "success");
     } catch (err) {
-      showToast(err instanceof Error ? err.message : "Failed to create");
+      showToast(err instanceof Error ? err.message : "作成に失敗しました");
     } finally {
       setLoading(false);
     }
@@ -49,24 +49,24 @@ export function KeywordRulesClient({
       await deleteKeywordRule(deleteTarget);
       setDeleteTarget(null);
       router.refresh();
-      showToast("Keyword rule deleted", "success");
+      showToast("キーワードルールを削除しました", "success");
     } catch (err) {
-      showToast(err instanceof Error ? err.message : "Failed to delete");
+      showToast(err instanceof Error ? err.message : "削除に失敗しました");
     }
   };
 
   const columns = [
-    { key: "keyword", label: "Keyword" },
+    { key: "keyword", label: "キーワード" },
     {
       key: "matchType",
-      label: "Match Type",
+      label: "マッチタイプ",
       render: (r: KeywordRule) => (
         <Badge>{r.matchType}</Badge>
       ),
     },
     {
       key: "responseText",
-      label: "Response",
+      label: "返信メッセージ",
       render: (r: KeywordRule) => (
         <span className="max-w-xs truncate block text-zinc-300">
           {r.responseText}
@@ -75,10 +75,10 @@ export function KeywordRulesClient({
     },
     {
       key: "enabled",
-      label: "Status",
+      label: "ステータス",
       render: (r: KeywordRule) => (
         <Badge variant={r.enabled ? "success" : "warning"}>
-          {r.enabled ? "Active" : "Disabled"}
+          {r.enabled ? "有効" : "無効"}
         </Badge>
       ),
     },
@@ -90,7 +90,7 @@ export function KeywordRulesClient({
           onClick={() => setDeleteTarget(r.id)}
           className="text-xs text-red-400 hover:text-red-300"
         >
-          Delete
+          削除
         </button>
       ),
     },
@@ -100,13 +100,13 @@ export function KeywordRulesClient({
     <>
       <div className="mt-4 flex items-center justify-between">
         <p className="text-sm text-zinc-400">
-          {initialRules.length} rule(s)
+          {initialRules.length} 件のルール
         </p>
         <button
           onClick={() => setShowForm(!showForm)}
           className="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-700"
         >
-          {showForm ? "Cancel" : "+ New Rule"}
+          {showForm ? "キャンセル" : "+ 新規ルール"}
         </button>
       </div>
 
@@ -117,34 +117,34 @@ export function KeywordRulesClient({
         >
           <div className="grid gap-3 sm:grid-cols-3">
             <div>
-              <label htmlFor="kw-keyword" className="mb-1 block text-xs text-zinc-400">Keyword</label>
+              <label htmlFor="kw-keyword" className="mb-1 block text-xs text-zinc-400">キーワード</label>
               <input
                 id="kw-keyword"
                 name="keyword"
-                placeholder="Keyword"
+                placeholder="キーワードを入力..."
                 required
                 className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-500"
               />
             </div>
             <div>
-              <label htmlFor="kw-matchType" className="mb-1 block text-xs text-zinc-400">Match Type</label>
+              <label htmlFor="kw-matchType" className="mb-1 block text-xs text-zinc-400">マッチタイプ</label>
               <select
                 id="kw-matchType"
                 name="matchType"
                 defaultValue="contains"
                 className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100"
               >
-                <option value="exact">Exact</option>
-                <option value="contains">Contains</option>
-                <option value="regex">Regex</option>
+                <option value="exact">完全一致</option>
+                <option value="contains">部分一致</option>
+                <option value="regex">正規表現</option>
               </select>
             </div>
             <div>
-              <label htmlFor="kw-responseText" className="mb-1 block text-xs text-zinc-400">Response Text</label>
+              <label htmlFor="kw-responseText" className="mb-1 block text-xs text-zinc-400">返信メッセージ</label>
               <input
                 id="kw-responseText"
                 name="responseText"
-                placeholder="Response text"
+                placeholder="返信メッセージを入力..."
                 required
                 className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-500"
               />
@@ -155,7 +155,7 @@ export function KeywordRulesClient({
             disabled={loading}
             className="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
           >
-            {loading ? "Creating..." : "Create"}
+            {loading ? "作成中..." : "作成"}
           </button>
         </form>
       )}
@@ -165,14 +165,14 @@ export function KeywordRulesClient({
           columns={columns}
           rows={initialRules}
           keyField="id"
-          emptyMessage="No keyword rules yet."
+          emptyMessage="キーワードルールを作成して、DMの自動返信を設定しよう！"
         />
       </div>
 
       <ConfirmDialog
         open={!!deleteTarget}
-        title="Delete Keyword Rule"
-        message="Are you sure? This action cannot be undone."
+        title="キーワードルールの削除"
+        message="本当に削除する？この操作は取り消せないよ。"
         onConfirm={handleDelete}
         onCancel={() => setDeleteTarget(null)}
       />

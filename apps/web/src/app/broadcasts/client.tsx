@@ -21,6 +21,14 @@ const STATUS_VARIANT: Record<string, "default" | "success" | "warning" | "danger
   failed: "danger",
 };
 
+const STATUS_LABELS: Record<string, string> = {
+  draft: "下書き",
+  scheduled: "予約済み",
+  sending: "送信中",
+  completed: "完了",
+  failed: "失敗",
+};
+
 export function BroadcastsClient({
   initialBroadcasts,
 }: {
@@ -47,9 +55,9 @@ export function BroadcastsClient({
       });
       setShowForm(false);
       router.refresh();
-      showToast("Broadcast created", "success");
+      showToast("ブロードキャストを作成しました", "success");
     } catch (err) {
-      showToast(err instanceof Error ? err.message : "Failed to create");
+      showToast(err instanceof Error ? err.message : "作成に失敗しました");
     } finally {
       setLoading(false);
     }
@@ -60,9 +68,9 @@ export function BroadcastsClient({
     try {
       await sendBroadcast(id);
       router.refresh();
-      showToast("Broadcast sent", "success");
+      showToast("ブロードキャストを送信しました", "success");
     } catch (err) {
-      showToast(err instanceof Error ? err.message : "Failed to send");
+      showToast(err instanceof Error ? err.message : "送信に失敗しました");
     } finally {
       setSending(null);
     }
@@ -74,35 +82,35 @@ export function BroadcastsClient({
       await deleteBroadcast(deleteTarget);
       setDeleteTarget(null);
       router.refresh();
-      showToast("Broadcast deleted", "success");
+      showToast("ブロードキャストを削除しました", "success");
     } catch (err) {
-      showToast(err instanceof Error ? err.message : "Failed to delete");
+      showToast(err instanceof Error ? err.message : "削除に失敗しました");
     }
   };
 
   const columns = [
-    { key: "title", label: "Title" },
+    { key: "title", label: "タイトル" },
     {
       key: "targetType",
-      label: "Target",
+      label: "対象",
       render: (r: Broadcast) => (
         <span className="text-sm text-zinc-300">
-          {r.targetType === "all" ? "All contacts" : `Tag: ${r.targetValue}`}
+          {r.targetType === "all" ? "全コンタクト" : `タグ: ${r.targetValue}`}
         </span>
       ),
     },
     {
       key: "status",
-      label: "Status",
+      label: "ステータス",
       render: (r: Broadcast) => (
         <Badge variant={STATUS_VARIANT[r.status] ?? "default"}>
-          {r.status}
+          {STATUS_LABELS[r.status] ?? r.status}
         </Badge>
       ),
     },
     {
       key: "sentCount",
-      label: "Sent / Failed",
+      label: "送信 / 失敗",
       render: (r: Broadcast) => (
         <span className="text-sm text-zinc-400">
           {r.sentCount} / {r.failedCount}
@@ -111,7 +119,7 @@ export function BroadcastsClient({
     },
     {
       key: "createdAt",
-      label: "Created",
+      label: "作成日",
       render: (r: Broadcast) => (
         <span className="text-xs text-zinc-500">
           {new Date(r.createdAt).toLocaleString()}
@@ -129,14 +137,14 @@ export function BroadcastsClient({
               disabled={sending === r.id}
               className="text-xs text-brand-400 hover:text-brand-300 disabled:opacity-50"
             >
-              {sending === r.id ? "Sending..." : "Send Now"}
+              {sending === r.id ? "送信中..." : "今すぐ送信"}
             </button>
           )}
           <button
             onClick={() => setDeleteTarget(r.id)}
             className="text-xs text-red-400 hover:text-red-300"
           >
-            Delete
+            削除
           </button>
         </div>
       ),
@@ -147,13 +155,13 @@ export function BroadcastsClient({
     <>
       <div className="mt-4 flex items-center justify-between">
         <p className="text-sm text-zinc-400">
-          {initialBroadcasts.length} broadcast(s)
+          {initialBroadcasts.length} 件のブロードキャスト
         </p>
         <button
           onClick={() => setShowForm(!showForm)}
           className="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-700"
         >
-          {showForm ? "Cancel" : "+ New Broadcast"}
+          {showForm ? "キャンセル" : "+ 新規ブロードキャスト"}
         </button>
       </div>
 
@@ -164,50 +172,50 @@ export function BroadcastsClient({
         >
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
-              <label htmlFor="bc-title" className="mb-1 block text-xs text-zinc-400">Title</label>
+              <label htmlFor="bc-title" className="mb-1 block text-xs text-zinc-400">タイトル</label>
               <input
                 id="bc-title"
                 name="title"
-                placeholder="Broadcast title"
+                placeholder="ブロードキャストのタイトル"
                 required
                 className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-500"
               />
             </div>
             <div>
-              <label htmlFor="bc-targetType" className="mb-1 block text-xs text-zinc-400">Target</label>
+              <label htmlFor="bc-targetType" className="mb-1 block text-xs text-zinc-400">対象</label>
               <select
                 id="bc-targetType"
                 name="targetType"
                 defaultValue="all"
                 className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100"
               >
-                <option value="all">All Contacts</option>
-                <option value="tag">By Tag</option>
+                <option value="all">全コンタクト</option>
+                <option value="tag">タグ指定</option>
               </select>
             </div>
           </div>
           <div>
-            <label htmlFor="bc-targetValue" className="mb-1 block text-xs text-zinc-400">Tag (if target = tag)</label>
+            <label htmlFor="bc-targetValue" className="mb-1 block text-xs text-zinc-400">タグ（対象がタグ指定の場合）</label>
             <input
               id="bc-targetValue"
               name="targetValue"
-              placeholder="e.g. vip"
+              placeholder="例: vip"
               className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-500"
             />
           </div>
           <div>
-            <label htmlFor="bc-messageText" className="mb-1 block text-xs text-zinc-400">Message</label>
+            <label htmlFor="bc-messageText" className="mb-1 block text-xs text-zinc-400">メッセージ</label>
             <textarea
               id="bc-messageText"
               name="messageText"
-              placeholder="Message text (supports {{name}}, {{username}}, etc.)"
+              placeholder="メッセージ本文（{{name}}、{{username}} 等のテンプレート変数が使えます）"
               required
               rows={3}
               className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-500"
             />
           </div>
           <div>
-            <label htmlFor="bc-scheduledAt" className="mb-1 block text-xs text-zinc-400">Schedule (optional)</label>
+            <label htmlFor="bc-scheduledAt" className="mb-1 block text-xs text-zinc-400">予約日時（任意）</label>
             <input
               id="bc-scheduledAt"
               name="scheduledAt"
@@ -220,7 +228,7 @@ export function BroadcastsClient({
             disabled={loading}
             className="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
           >
-            {loading ? "Creating..." : "Create Broadcast"}
+            {loading ? "作成中..." : "ブロードキャストを作成"}
           </button>
         </form>
       )}
@@ -230,14 +238,14 @@ export function BroadcastsClient({
           columns={columns}
           rows={initialBroadcasts}
           keyField="id"
-          emptyMessage="No broadcasts yet."
+          emptyMessage="ブロードキャストを作成して、コンタクトに一斉DMを送ろう！"
         />
       </div>
 
       <ConfirmDialog
         open={!!deleteTarget}
-        title="Delete Broadcast"
-        message="Are you sure? This action cannot be undone."
+        title="ブロードキャストの削除"
+        message="本当に削除する？この操作は取り消せないよ。"
         onConfirm={handleDelete}
         onCancel={() => setDeleteTarget(null)}
       />

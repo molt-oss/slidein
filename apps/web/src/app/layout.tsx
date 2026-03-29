@@ -4,8 +4,8 @@ import { ToastProvider } from "@/components/toast";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "slidein — Admin",
-  description: "DM automation admin dashboard",
+  title: "slidein — 管理画面",
+  description: "DM自動化 管理ダッシュボード",
 };
 
 export default function RootLayout({
@@ -14,7 +14,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="dark">
+    <html lang="ja" className="dark">
       <body className="flex min-h-screen">
         <ToastProvider>
           <Sidebar />

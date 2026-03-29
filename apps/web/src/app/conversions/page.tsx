@@ -13,10 +13,10 @@ export default async function ConversionsPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold">Conversion Goals</h1>
+      <h1 className="text-2xl font-bold">CV計測</h1>
       {error && (
         <div className="mt-4 rounded-md border border-amber-700/50 bg-amber-900/20 px-4 py-3 text-sm text-amber-400">
-          ⚠️ Could not load conversion goals.
+          ⚠️ コンバージョンゴールを読み込めませんでした。
         </div>
       )}
       <ConversionsClient initialGoals={data} />

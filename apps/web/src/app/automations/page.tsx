@@ -13,10 +13,10 @@ export default async function AutomationsPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold">Automation Rules</h1>
+      <h1 className="text-2xl font-bold">自動化ルール管理</h1>
       {error && (
         <div className="mt-4 rounded-md border border-amber-700/50 bg-amber-900/20 px-4 py-3 text-sm text-amber-400">
-          ⚠️ Could not load automation rules.
+          ⚠️ 自動化ルールを読み込めませんでした。
         </div>
       )}
       <AutomationsClient initialRules={data} />

@@ -59,9 +59,9 @@ export function AIClient({
         maxTokens,
       });
       router.refresh();
-      showToast("AI config saved", "success");
+      showToast("AI設定を保存しました", "success");
     } catch (err) {
-      showToast(err instanceof Error ? err.message : "Failed to save");
+      showToast(err instanceof Error ? err.message : "保存に失敗しました");
     } finally {
       setLoading(false);
     }
@@ -71,7 +71,7 @@ export function AIClient({
 
   return (
     <div className="mt-6 space-y-6">
-      {/* Enable toggle */}
+      {/* 有効/無効トグル */}
       <div className="flex items-center gap-4 rounded-lg border border-zinc-800 bg-zinc-900 p-4">
         <label className="flex cursor-pointer items-center gap-3">
           <input
@@ -81,21 +81,21 @@ export function AIClient({
             className="h-5 w-5 rounded border-zinc-700 bg-zinc-800 text-brand-600"
           />
           <span className="text-sm font-medium text-zinc-200">
-            Enable AI Auto-Reply
+            AI自動応答を有効にする
           </span>
         </label>
         <Badge variant={enabled ? "success" : "warning"}>
-          {enabled ? "Active" : "Disabled"}
+          {enabled ? "有効" : "無効"}
         </Badge>
       </div>
 
-      {/* Provider & Model */}
+      {/* プロバイダー & モデル */}
       <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-4 space-y-4">
-        <h2 className="text-sm font-semibold text-zinc-300">Provider</h2>
+        <h2 className="text-sm font-semibold text-zinc-300">プロバイダー</h2>
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <label htmlFor="ai-provider" className="mb-1 block text-xs text-zinc-400">
-              AI Provider
+              AIプロバイダー
             </label>
             <select
               id="ai-provider"
@@ -116,7 +116,7 @@ export function AIClient({
           </div>
           <div>
             <label htmlFor="ai-model" className="mb-1 block text-xs text-zinc-400">
-              Model
+              モデル
             </label>
             <select
               id="ai-model"
@@ -134,7 +134,7 @@ export function AIClient({
         </div>
         <div>
           <label htmlFor="ai-max-tokens" className="mb-1 block text-xs text-zinc-400">
-            Max Tokens
+            最大トークン数
           </label>
           <input
             id="ai-max-tokens"
@@ -148,45 +148,43 @@ export function AIClient({
         </div>
       </div>
 
-      {/* System Prompt */}
+      {/* システムプロンプト */}
       <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-4 space-y-2">
-        <h2 className="text-sm font-semibold text-zinc-300">System Prompt</h2>
+        <h2 className="text-sm font-semibold text-zinc-300">システムプロンプト</h2>
         <p className="text-xs text-zinc-500">
-          Instructions for the AI. Contact info (name, tags, score) is
-          automatically appended.
+          AIへの指示を記述します。コンタクト情報（名前、タグ、スコア）は自動で付加されます。
         </p>
         <textarea
           value={systemPrompt}
           onChange={(e) => setSystemPrompt(e.target.value)}
           rows={4}
-          placeholder="You are a helpful assistant for our Instagram shop..."
+          placeholder="あなたはInstagramショップのアシスタントです..."
           className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-600"
         />
       </div>
 
-      {/* Knowledge Base */}
+      {/* ナレッジベース */}
       <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-4 space-y-2">
-        <h2 className="text-sm font-semibold text-zinc-300">Knowledge Base</h2>
+        <h2 className="text-sm font-semibold text-zinc-300">ナレッジベース</h2>
         <p className="text-xs text-zinc-500">
-          Product info, FAQ, business details. The AI will reference this when
-          answering questions.
+          商品情報、FAQ、ビジネス情報など。AIが質問に回答する際に参照します。
         </p>
         <textarea
           value={knowledgeBase}
           onChange={(e) => setKnowledgeBase(e.target.value)}
           rows={8}
-          placeholder="Our shop hours: Mon-Fri 10am-6pm&#10;Return policy: 30 days..."
+          placeholder="営業時間: 月〜金 10:00-18:00&#10;返品ポリシー: 30日以内..."
           className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-600"
         />
       </div>
 
-      {/* Save */}
+      {/* 保存 */}
       <button
         onClick={handleSave}
         disabled={loading}
         className="rounded-md bg-brand-600 px-6 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-700 disabled:opacity-50"
       >
-        {loading ? "Saving..." : "Save Configuration"}
+        {loading ? "保存中..." : "設定を保存"}
       </button>
     </div>
   );

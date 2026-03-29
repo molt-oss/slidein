@@ -13,13 +13,13 @@ export default async function AIPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold">AI Auto-Reply</h1>
+      <h1 className="text-2xl font-bold">AI自動応答設定</h1>
       <p className="mt-1 text-sm text-zinc-400">
-        Configure AI-powered automatic responses using Claude or OpenAI.
+        ClaudeやOpenAIを使ったAI自動応答を設定できます。
       </p>
       {error && (
         <div className="mt-4 rounded-md border border-amber-700/50 bg-amber-900/20 px-4 py-3 text-sm text-amber-400">
-          ⚠️ Could not load AI configuration.
+          ⚠️ AI設定を読み込めませんでした。
         </div>
       )}
       <AIClient initialConfig={data} />

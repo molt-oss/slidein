@@ -17,7 +17,7 @@ export function DataTable<T>({
   columns,
   rows,
   keyField,
-  emptyMessage = "No data",
+  emptyMessage = "データがありません",
 }: DataTableProps<T>) {
   return (
     <div className="overflow-x-auto rounded-lg border border-zinc-800">

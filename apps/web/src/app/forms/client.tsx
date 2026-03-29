@@ -60,9 +60,9 @@ export function FormsClient({
       setShowForm(false);
       setFields([{ label: "", type: "text", key: "" }]);
       router.refresh();
-      showToast("Form created", "success");
+      showToast("フォームを作成しました", "success");
     } catch (err) {
-      showToast(err instanceof Error ? err.message : "Failed to create");
+      showToast(err instanceof Error ? err.message : "作成に失敗しました");
     } finally {
       setLoading(false);
     }
@@ -74,9 +74,9 @@ export function FormsClient({
       await deleteForm(deleteTarget);
       setDeleteTarget(null);
       router.refresh();
-      showToast("Form deleted", "success");
+      showToast("フォームを削除しました", "success");
     } catch (err) {
-      showToast(err instanceof Error ? err.message : "Failed to delete");
+      showToast(err instanceof Error ? err.message : "削除に失敗しました");
     }
   };
 
@@ -85,22 +85,22 @@ export function FormsClient({
       const result = await fetchFormResponses(form.id);
       setResponses({ formName: form.name, data: result.data });
     } catch (err) {
-      showToast(err instanceof Error ? err.message : "Failed to load");
+      showToast(err instanceof Error ? err.message : "読み込みに失敗しました");
     }
   };
 
   const columns = [
-    { key: "name", label: "Name" },
+    { key: "name", label: "フォーム名" },
     {
       key: "fields",
-      label: "Fields",
+      label: "フィールド数",
       render: (r: Form) => (
-        <span className="text-sm text-zinc-400">{r.fields.length} field(s)</span>
+        <span className="text-sm text-zinc-400">{r.fields.length} 件</span>
       ),
     },
     {
       key: "createdAt",
-      label: "Created",
+      label: "作成日",
       render: (r: Form) => (
         <span className="text-xs text-zinc-500">
           {new Date(r.createdAt).toLocaleString()}
@@ -116,13 +116,13 @@ export function FormsClient({
             onClick={() => handleViewResponses(r)}
             className="text-xs text-brand-400 hover:text-brand-300"
           >
-            Responses
+            回答一覧
           </button>
           <button
             onClick={() => setDeleteTarget(r.id)}
             className="text-xs text-red-400 hover:text-red-300"
           >
-            Delete
+            削除
           </button>
         </div>
       ),
@@ -133,13 +133,13 @@ export function FormsClient({
     <>
       <div className="mt-4 flex items-center justify-between">
         <p className="text-sm text-zinc-400">
-          {initialForms.length} form(s)
+          {initialForms.length} 件のフォーム
         </p>
         <button
           onClick={() => setShowForm(!showForm)}
           className="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-700"
         >
-          {showForm ? "Cancel" : "+ New Form"}
+          {showForm ? "キャンセル" : "+ 新規フォーム"}
         </button>
       </div>
 
@@ -149,27 +149,27 @@ export function FormsClient({
           className="mt-4 rounded-lg border border-zinc-800 bg-zinc-900 p-4 space-y-3"
         >
           <div>
-            <label htmlFor="fm-name" className="mb-1 block text-xs text-zinc-400">Form Name</label>
+            <label htmlFor="fm-name" className="mb-1 block text-xs text-zinc-400">フォーム名</label>
             <input
               id="fm-name"
               name="name"
-              placeholder="e.g. Survey"
+              placeholder="例: アンケート"
               required
               className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-500"
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs text-zinc-400">Fields</label>
+            <label className="mb-1 block text-xs text-zinc-400">フィールド</label>
             {fields.map((f, idx) => (
               <div key={idx} className="mb-2 flex gap-2">
                 <input
-                  placeholder="Label (question)"
+                  placeholder="ラベル（質問文）"
                   value={f.label}
                   onChange={(e) => updateField(idx, "label", e.target.value)}
                   className="flex-1 rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-500"
                 />
                 <input
-                  placeholder="Key"
+                  placeholder="キー"
                   value={f.key}
                   onChange={(e) => updateField(idx, "key", e.target.value)}
                   className="w-28 rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-500"
@@ -179,9 +179,9 @@ export function FormsClient({
                   onChange={(e) => updateField(idx, "type", e.target.value)}
                   className="w-24 rounded-md border border-zinc-700 bg-zinc-800 px-2 py-2 text-sm text-zinc-100"
                 >
-                  <option value="text">Text</option>
-                  <option value="number">Number</option>
-                  <option value="email">Email</option>
+                  <option value="text">テキスト</option>
+                  <option value="number">数値</option>
+                  <option value="email">メール</option>
                 </select>
                 {fields.length > 1 && (
                   <button
@@ -199,17 +199,17 @@ export function FormsClient({
               onClick={addField}
               className="text-xs text-brand-400 hover:text-brand-300"
             >
-              + Add Field
+              + フィールド追加
             </button>
           </div>
           <div>
             <label htmlFor="fm-thanks" className="mb-1 block text-xs text-zinc-400">
-              Thank You Message
+              サンクスメッセージ
             </label>
             <input
               id="fm-thanks"
               name="thankYouMessage"
-              placeholder="Thank you!"
+              placeholder="ありがとうございます！"
               className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-500"
             />
           </div>
@@ -218,7 +218,7 @@ export function FormsClient({
             disabled={loading}
             className="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
           >
-            {loading ? "Creating..." : "Create Form"}
+            {loading ? "作成中..." : "フォームを作成"}
           </button>
         </form>
       )}
@@ -227,18 +227,18 @@ export function FormsClient({
         <div className="mt-4 rounded-lg border border-zinc-800 bg-zinc-900 p-4">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold text-zinc-100">
-              Responses: {responses.formName}
+              回答一覧: {responses.formName}
             </h3>
             <button
               onClick={() => setResponses(null)}
               className="text-xs text-zinc-400 hover:text-zinc-200"
             >
-              Close
+              閉じる
             </button>
           </div>
           <div className="mt-3 space-y-2">
             {responses.data.length === 0 ? (
-              <p className="text-sm text-zinc-500">No responses yet.</p>
+              <p className="text-sm text-zinc-500">まだ回答がないよ</p>
             ) : (
               responses.data.map((r) => (
                 <div
@@ -246,9 +246,9 @@ export function FormsClient({
                   className="rounded border border-zinc-700 bg-zinc-800 p-3"
                 >
                   <div className="flex items-center gap-2 text-xs text-zinc-500">
-                    <span>Contact: {r.contactId}</span>
+                    <span>コンタクト: {r.contactId}</span>
                     <Badge variant={r.completedAt ? "success" : "warning"}>
-                      {r.completedAt ? "Complete" : "In Progress"}
+                      {r.completedAt ? "完了" : "回答中"}
                     </Badge>
                   </div>
                   <pre className="mt-1 text-xs text-zinc-300">
@@ -266,14 +266,14 @@ export function FormsClient({
           columns={columns}
           rows={initialForms}
           keyField="id"
-          emptyMessage="No forms yet."
+          emptyMessage="フォームを作成して、DM経由でアンケートを実施しよう！"
         />
       </div>
 
       <ConfirmDialog
         open={!!deleteTarget}
-        title="Delete Form"
-        message="Are you sure? This action cannot be undone."
+        title="フォームの削除"
+        message="本当に削除する？この操作は取り消せないよ。"
         onConfirm={handleDelete}
         onCancel={() => setDeleteTarget(null)}
       />

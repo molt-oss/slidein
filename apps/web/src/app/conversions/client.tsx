@@ -37,9 +37,9 @@ export function ConversionsClient({
       });
       setShowForm(false);
       router.refresh();
-      showToast("Conversion goal created", "success");
+      showToast("コンバージョンゴールを作成しました", "success");
     } catch (err) {
-      showToast(err instanceof Error ? err.message : "Failed to create");
+      showToast(err instanceof Error ? err.message : "作成に失敗しました");
     } finally {
       setLoading(false);
     }
@@ -51,9 +51,9 @@ export function ConversionsClient({
       await deleteConversionGoal(deleteTarget);
       setDeleteTarget(null);
       router.refresh();
-      showToast("Conversion goal deleted", "success");
+      showToast("コンバージョンゴールを削除しました", "success");
     } catch (err) {
-      showToast(err instanceof Error ? err.message : "Failed to delete");
+      showToast(err instanceof Error ? err.message : "削除に失敗しました");
     }
   };
 
@@ -62,15 +62,15 @@ export function ConversionsClient({
       const result = await fetchConversionReport(goalId);
       setReport(result.data);
     } catch (err) {
-      showToast(err instanceof Error ? err.message : "Failed to load report");
+      showToast(err instanceof Error ? err.message : "レポートの読み込みに失敗しました");
     }
   };
 
   const columns = [
-    { key: "name", label: "Name" },
+    { key: "name", label: "ゴール名" },
     {
       key: "eventType",
-      label: "Event Type",
+      label: "イベントタイプ",
       render: (r: ConversionGoal) => (
         <code className="rounded bg-zinc-800 px-2 py-1 text-xs text-zinc-300">
           {r.eventType}
@@ -79,14 +79,14 @@ export function ConversionsClient({
     },
     {
       key: "targetValue",
-      label: "Target",
+      label: "目標値",
       render: (r: ConversionGoal) => (
         <span className="text-sm text-zinc-400">{r.targetValue ?? "—"}</span>
       ),
     },
     {
       key: "createdAt",
-      label: "Created",
+      label: "作成日",
       render: (r: ConversionGoal) => (
         <span className="text-xs text-zinc-500">
           {new Date(r.createdAt).toLocaleString()}
@@ -102,13 +102,13 @@ export function ConversionsClient({
             onClick={() => handleViewReport(r.id)}
             className="text-xs text-brand-400 hover:text-brand-300"
           >
-            Report
+            レポート
           </button>
           <button
             onClick={() => setDeleteTarget(r.id)}
             className="text-xs text-red-400 hover:text-red-300"
           >
-            Delete
+            削除
           </button>
         </div>
       ),
@@ -119,13 +119,13 @@ export function ConversionsClient({
     <>
       <div className="mt-4 flex items-center justify-between">
         <p className="text-sm text-zinc-400">
-          {initialGoals.length} goal(s)
+          {initialGoals.length} 件のゴール
         </p>
         <button
           onClick={() => setShowForm(!showForm)}
           className="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-700"
         >
-          {showForm ? "Cancel" : "+ New Goal"}
+          {showForm ? "キャンセル" : "+ 新規ゴール"}
         </button>
       </div>
 
@@ -136,32 +136,32 @@ export function ConversionsClient({
         >
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
-              <label htmlFor="cv-name" className="mb-1 block text-xs text-zinc-400">Goal Name</label>
+              <label htmlFor="cv-name" className="mb-1 block text-xs text-zinc-400">ゴール名</label>
               <input
                 id="cv-name"
                 name="name"
-                placeholder="e.g. Purchase"
+                placeholder="例: 購入完了"
                 required
                 className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-500"
               />
             </div>
             <div>
-              <label htmlFor="cv-eventType" className="mb-1 block text-xs text-zinc-400">Event Type</label>
+              <label htmlFor="cv-eventType" className="mb-1 block text-xs text-zinc-400">イベントタイプ</label>
               <input
                 id="cv-eventType"
                 name="eventType"
-                placeholder="e.g. link_clicked"
+                placeholder="例: link_clicked"
                 required
                 className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-500"
               />
             </div>
           </div>
           <div>
-            <label htmlFor="cv-target" className="mb-1 block text-xs text-zinc-400">Target Value (optional)</label>
+            <label htmlFor="cv-target" className="mb-1 block text-xs text-zinc-400">目標値（任意）</label>
             <input
               id="cv-target"
               name="targetValue"
-              placeholder="e.g. 100"
+              placeholder="例: 100"
               className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-500"
             />
           </div>
@@ -170,7 +170,7 @@ export function ConversionsClient({
             disabled={loading}
             className="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
           >
-            {loading ? "Creating..." : "Create Goal"}
+            {loading ? "作成中..." : "ゴールを作成"}
           </button>
         </form>
       )}
@@ -179,26 +179,26 @@ export function ConversionsClient({
         <div className="mt-4 rounded-lg border border-zinc-800 bg-zinc-900 p-4">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold text-zinc-100">
-              Report: {report.goalName}
+              レポート: {report.goalName}
             </h3>
             <button
               onClick={() => setReport(null)}
               className="text-xs text-zinc-400 hover:text-zinc-200"
             >
-              Close
+              閉じる
             </button>
           </div>
           <div className="mt-3 grid grid-cols-2 gap-4 sm:grid-cols-4">
             <div>
-              <p className="text-xs text-zinc-500">Total CVs</p>
+              <p className="text-xs text-zinc-500">総CV数</p>
               <p className="text-xl font-bold text-zinc-100">{report.totalConversions}</p>
             </div>
             <div>
-              <p className="text-xs text-zinc-500">Unique Contacts</p>
+              <p className="text-xs text-zinc-500">ユニークコンタクト</p>
               <p className="text-xl font-bold text-zinc-100">{report.uniqueContacts}</p>
             </div>
             <div>
-              <p className="text-xs text-zinc-500">Total Contacts</p>
+              <p className="text-xs text-zinc-500">総コンタクト数</p>
               <p className="text-xl font-bold text-zinc-100">{report.totalContacts}</p>
             </div>
             <div>
@@ -214,14 +214,14 @@ export function ConversionsClient({
           columns={columns}
           rows={initialGoals}
           keyField="id"
-          emptyMessage="No conversion goals yet."
+          emptyMessage="コンバージョンゴールを作成して、成果を計測しよう！"
         />
       </div>
 
       <ConfirmDialog
         open={!!deleteTarget}
-        title="Delete Conversion Goal"
-        message="Are you sure? This action cannot be undone."
+        title="コンバージョンゴールの削除"
+        message="本当に削除する？この操作は取り消せないよ。"
         onConfirm={handleDelete}
         onCancel={() => setDeleteTarget(null)}
       />

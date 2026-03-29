@@ -22,9 +22,9 @@ export default async function ScenarioDetailPage({ params }: Props) {
   if (error || !data) {
     return (
       <div>
-        <h1 className="text-2xl font-bold">Scenario Not Found</h1>
+        <h1 className="text-2xl font-bold">シナリオが見つかりません</h1>
         <p className="mt-4 text-sm text-zinc-400">
-          {error ?? "The scenario could not be loaded."}
+          {error ?? "シナリオを読み込めませんでした。"}
         </p>
       </div>
     );

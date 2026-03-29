@@ -40,9 +40,9 @@ export function ScenariosClient({
       });
       setShowForm(false);
       router.refresh();
-      showToast("Scenario created", "success");
+      showToast("シナリオを作成しました", "success");
     } catch (err) {
-      showToast(err instanceof Error ? err.message : "Failed to create");
+      showToast(err instanceof Error ? err.message : "作成に失敗しました");
     } finally {
       setLoading(false);
     }
@@ -54,16 +54,16 @@ export function ScenariosClient({
       await deleteScenario(deleteTarget);
       setDeleteTarget(null);
       router.refresh();
-      showToast("Scenario deleted", "success");
+      showToast("シナリオを削除しました", "success");
     } catch (err) {
-      showToast(err instanceof Error ? err.message : "Failed to delete");
+      showToast(err instanceof Error ? err.message : "削除に失敗しました");
     }
   };
 
   const columns = [
     {
       key: "name",
-      label: "Name",
+      label: "シナリオ名",
       render: (r: Scenario) => (
         <Link
           href={`/scenarios/${r.id}`}
@@ -75,21 +75,21 @@ export function ScenariosClient({
     },
     {
       key: "triggerType",
-      label: "Trigger",
+      label: "トリガー",
       render: (r: Scenario) => <Badge>{r.triggerType}</Badge>,
     },
     {
       key: "enabled",
-      label: "Status",
+      label: "ステータス",
       render: (r: Scenario) => (
         <Badge variant={r.enabled ? "success" : "warning"}>
-          {r.enabled ? "Active" : "Disabled"}
+          {r.enabled ? "有効" : "無効"}
         </Badge>
       ),
     },
     {
       key: "updatedAt",
-      label: "Updated",
+      label: "更新日",
       render: (r: Scenario) => (
         <span className="text-xs text-zinc-500">
           {new Date(r.updatedAt).toLocaleDateString()}
@@ -104,7 +104,7 @@ export function ScenariosClient({
           onClick={() => setDeleteTarget(r.id)}
           className="text-xs text-red-400 hover:text-red-300"
         >
-          Delete
+          削除
         </button>
       ),
     },
@@ -114,13 +114,13 @@ export function ScenariosClient({
     <>
       <div className="mt-4 flex items-center justify-between">
         <p className="text-sm text-zinc-400">
-          {initialScenarios.length} scenario(s)
+          {initialScenarios.length} 件のシナリオ
         </p>
         <button
           onClick={() => setShowForm(!showForm)}
           className="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-700"
         >
-          {showForm ? "Cancel" : "+ New Scenario"}
+          {showForm ? "キャンセル" : "+ 新規シナリオ"}
         </button>
       </div>
 
@@ -131,53 +131,53 @@ export function ScenariosClient({
         >
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
-              <label htmlFor="sc-name" className="mb-1 block text-xs text-zinc-400">Scenario Name</label>
+              <label htmlFor="sc-name" className="mb-1 block text-xs text-zinc-400">シナリオ名</label>
               <input
                 id="sc-name"
                 name="name"
-                placeholder="Scenario name"
+                placeholder="シナリオ名を入力..."
                 required
                 className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-500"
               />
             </div>
             <div>
-              <label htmlFor="sc-triggerType" className="mb-1 block text-xs text-zinc-400">Trigger Type</label>
+              <label htmlFor="sc-triggerType" className="mb-1 block text-xs text-zinc-400">トリガータイプ</label>
               <select
                 id="sc-triggerType"
                 name="triggerType"
                 defaultValue="keyword"
                 className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100"
               >
-                <option value="keyword">Keyword</option>
-                <option value="comment">Comment</option>
+                <option value="keyword">キーワード</option>
+                <option value="comment">コメント</option>
                 <option value="api">API</option>
               </select>
             </div>
           </div>
           <div>
-            <label htmlFor="sc-triggerValue" className="mb-1 block text-xs text-zinc-400">Trigger Value</label>
+            <label htmlFor="sc-triggerValue" className="mb-1 block text-xs text-zinc-400">トリガー値</label>
             <input
               id="sc-triggerValue"
               name="triggerValue"
-              placeholder="Trigger value (optional)"
+              placeholder="トリガー値（任意）"
               className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-500"
             />
           </div>
           <div>
-            <label htmlFor="sc-description" className="mb-1 block text-xs text-zinc-400">Description</label>
+            <label htmlFor="sc-description" className="mb-1 block text-xs text-zinc-400">説明</label>
             <input
               id="sc-description"
               name="description"
-              placeholder="Description (optional)"
+              placeholder="説明（任意）"
               className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-500"
             />
           </div>
           <div>
-            <label htmlFor="sc-firstMessage" className="mb-1 block text-xs text-zinc-400">First Step Message</label>
+            <label htmlFor="sc-firstMessage" className="mb-1 block text-xs text-zinc-400">最初のステップメッセージ</label>
             <textarea
               id="sc-firstMessage"
               name="firstMessage"
-              placeholder="First step message"
+              placeholder="最初のステップメッセージを入力..."
               required
               rows={3}
               className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-500"
@@ -188,7 +188,7 @@ export function ScenariosClient({
             disabled={loading}
             className="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
           >
-            {loading ? "Creating..." : "Create Scenario"}
+            {loading ? "作成中..." : "シナリオを作成"}
           </button>
         </form>
       )}
@@ -198,14 +198,14 @@ export function ScenariosClient({
           columns={columns}
           rows={initialScenarios}
           keyField="id"
-          emptyMessage="No scenarios yet."
+          emptyMessage="シナリオを作成して、ステップDMを自動配信しよう！"
         />
       </div>
 
       <ConfirmDialog
         open={!!deleteTarget}
-        title="Delete Scenario"
-        message="This will delete the scenario and all its steps. Are you sure?"
+        title="シナリオの削除"
+        message="シナリオと全ステップが削除されるよ。本当に削除する？"
         onConfirm={handleDelete}
         onCancel={() => setDeleteTarget(null)}
       />

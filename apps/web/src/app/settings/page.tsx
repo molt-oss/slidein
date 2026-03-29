@@ -20,10 +20,10 @@ export default async function SettingsPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold">Settings</h1>
+      <h1 className="text-2xl font-bold">設定</h1>
       {error && (
         <div className="mt-4 rounded-md border border-amber-700/50 bg-amber-900/20 px-4 py-3 text-sm text-amber-400">
-          ⚠️ Could not load settings.
+          ⚠️ 設定を読み込めませんでした。
         </div>
       )}
       <SettingsClient initialSettings={data} />

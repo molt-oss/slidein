@@ -14,10 +14,10 @@ interface StepInput {
 }
 
 function formatDelay(seconds: number): string {
-  if (seconds === 0) return "Immediately";
-  if (seconds < 3600) return `${Math.round(seconds / 60)}m`;
-  if (seconds < 86400) return `${Math.round(seconds / 3600)}h`;
-  return `${Math.round(seconds / 86400)}d`;
+  if (seconds === 0) return "即時";
+  if (seconds < 3600) return `${Math.round(seconds / 60)}分`;
+  if (seconds < 86400) return `${Math.round(seconds / 3600)}時間`;
+  return `${Math.round(seconds / 86400)}日`;
 }
 
 export function ScenarioDetailClient({
@@ -79,9 +79,9 @@ export function ScenarioDetailClient({
     try {
       await updateScenario(scenario.id, { name, enabled, steps });
       router.refresh();
-      showToast("Scenario saved", "success");
+      showToast("シナリオを保存しました", "success");
     } catch (err) {
-      showToast(err instanceof Error ? err.message : "Failed to save");
+      showToast(err instanceof Error ? err.message : "保存に失敗しました");
     } finally {
       setSaving(false);
     }
@@ -94,18 +94,18 @@ export function ScenarioDetailClient({
           onClick={() => router.push("/scenarios")}
           className="text-sm text-zinc-400 hover:text-zinc-200"
         >
-          ← Back
+          ← 戻る
         </button>
-        <h1 className="text-2xl font-bold">Edit Scenario</h1>
+        <h1 className="text-2xl font-bold">シナリオ編集</h1>
       </div>
 
       <div className="mt-6 space-y-4">
-        {/* Name & Enable */}
+        {/* 名前 & 有効/無効 */}
         <div className="flex items-center gap-4">
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            aria-label="Scenario name"
+            aria-label="シナリオ名"
             className="flex-1 rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100"
           />
           <button
@@ -113,18 +113,18 @@ export function ScenarioDetailClient({
             className="text-sm"
           >
             <Badge variant={enabled ? "success" : "warning"}>
-              {enabled ? "Active" : "Disabled"}
+              {enabled ? "有効" : "無効"}
             </Badge>
           </button>
         </div>
 
         <div className="text-xs text-zinc-500">
-          Trigger: {scenario.triggerType}
+          トリガー: {scenario.triggerType}
           {scenario.triggerValue ? ` → "${scenario.triggerValue}"` : ""}
         </div>
 
-        {/* Steps */}
-        <h2 className="text-lg font-semibold text-zinc-300">Steps</h2>
+        {/* ステップ */}
+        <h2 className="text-lg font-semibold text-zinc-300">ステップ</h2>
         <div className="space-y-3">
           {steps.map((step, i) => (
             <div
@@ -133,7 +133,7 @@ export function ScenarioDetailClient({
             >
               <div className="flex items-center justify-between">
                 <span className="text-xs font-mono text-zinc-500">
-                  Step {step.stepOrder}
+                  ステップ {step.stepOrder}
                 </span>
                 <div className="flex items-center gap-2">
                   <button
@@ -154,7 +154,7 @@ export function ScenarioDetailClient({
                     onClick={() => removeStep(i)}
                     className="text-xs text-red-400 hover:text-red-300"
                   >
-                    Remove
+                    削除
                   </button>
                 </div>
               </div>
@@ -163,13 +163,13 @@ export function ScenarioDetailClient({
                 value={step.messageText}
                 onChange={(e) => updateStep(i, "messageText", e.target.value)}
                 rows={2}
-                aria-label={`Step ${step.stepOrder} message text`}
+                aria-label={`ステップ ${step.stepOrder} メッセージ`}
                 className="mt-2 w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100"
-                placeholder="Message text"
+                placeholder="メッセージを入力..."
               />
 
               <div className="mt-2 flex items-center gap-3">
-                <label className="text-xs text-zinc-400">Delay:</label>
+                <label className="text-xs text-zinc-400">遅延:</label>
                 <input
                   type="number"
                   min="0"
@@ -177,15 +177,15 @@ export function ScenarioDetailClient({
                   onChange={(e) =>
                     updateStep(i, "delaySeconds", Number(e.target.value))
                   }
-                  aria-label={`Step ${step.stepOrder} delay seconds`}
+                  aria-label={`ステップ ${step.stepOrder} 遅延秒数`}
                   className="w-24 rounded-md border border-zinc-700 bg-zinc-800 px-2 py-1 text-sm text-zinc-100"
                 />
                 <span className="text-xs text-zinc-500">
-                  seconds ({formatDelay(step.delaySeconds)})
+                  秒 ({formatDelay(step.delaySeconds)})
                 </span>
 
                 <label className="ml-4 text-xs text-zinc-400">
-                  Condition tag:
+                  条件タグ:
                 </label>
                 <input
                   value={step.conditionTag ?? ""}
@@ -196,8 +196,8 @@ export function ScenarioDetailClient({
                       e.target.value || null,
                     )
                   }
-                  placeholder="Optional"
-                  aria-label={`Step ${step.stepOrder} condition tag`}
+                  placeholder="任意"
+                  aria-label={`ステップ ${step.stepOrder} 条件タグ`}
                   className="w-32 rounded-md border border-zinc-700 bg-zinc-800 px-2 py-1 text-sm text-zinc-100 placeholder-zinc-600"
                 />
               </div>
@@ -209,7 +209,7 @@ export function ScenarioDetailClient({
           onClick={addStep}
           className="rounded-md border border-dashed border-zinc-700 px-4 py-2 text-sm text-zinc-400 transition-colors hover:border-brand-500 hover:text-brand-400"
         >
-          + Add Step
+          + ステップを追加
         </button>
 
         <div className="flex justify-end pt-4">
@@ -218,7 +218,7 @@ export function ScenarioDetailClient({
             disabled={saving || steps.length === 0}
             className="rounded-md bg-brand-600 px-6 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-700 disabled:opacity-50"
           >
-            {saving ? "Saving..." : "Save Changes"}
+            {saving ? "保存中..." : "変更を保存"}
           </button>
         </div>
       </div>

@@ -23,9 +23,9 @@ export function SettingsClient({
     try {
       await updateDeliverySettings({ startHour, endHour, timezone });
       router.refresh();
-      showToast("Settings saved", "success");
+      showToast("設定を保存しました", "success");
     } catch (err) {
-      showToast(err instanceof Error ? err.message : "Failed to save");
+      showToast(err instanceof Error ? err.message : "保存に失敗しました");
     } finally {
       setLoading(false);
     }
@@ -36,18 +36,17 @@ export function SettingsClient({
   return (
     <div className="mt-6 max-w-lg">
       <h2 className="text-lg font-semibold text-zinc-100">
-        Delivery Hours
+        配信時間帯
       </h2>
       <p className="mt-1 text-sm text-zinc-400">
-        Messages will only be sent within this time window. Outside this range,
-        messages are queued until the next delivery window.
+        メッセージはこの時間帯内にのみ送信されます。時間外のメッセージは次の配信時間帯までキューに保持されます。
       </p>
 
       <form onSubmit={handleSave} className="mt-4 space-y-4">
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <label htmlFor="ds-start" className="mb-1 block text-xs text-zinc-400">
-              Start Hour
+              開始時刻
             </label>
             <select
               id="ds-start"
@@ -64,7 +63,7 @@ export function SettingsClient({
           </div>
           <div>
             <label htmlFor="ds-end" className="mb-1 block text-xs text-zinc-400">
-              End Hour
+              終了時刻
             </label>
             <select
               id="ds-end"
@@ -83,7 +82,7 @@ export function SettingsClient({
 
         <div>
           <label htmlFor="ds-tz" className="mb-1 block text-xs text-zinc-400">
-            Timezone
+            タイムゾーン
           </label>
           <input
             id="ds-tz"
@@ -95,7 +94,7 @@ export function SettingsClient({
         </div>
 
         <div className="rounded-md border border-zinc-700 bg-zinc-800/50 p-3 text-sm text-zinc-400">
-          Current window: <strong className="text-zinc-200">
+          現在の配信時間帯: <strong className="text-zinc-200">
             {String(startHour).padStart(2, "0")}:00 – {String(endHour).padStart(2, "0")}:00
           </strong> ({timezone})
         </div>
@@ -105,7 +104,7 @@ export function SettingsClient({
           disabled={loading}
           className="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
         >
-          {loading ? "Saving..." : "Save Settings"}
+          {loading ? "保存中..." : "設定を保存"}
         </button>
       </form>
     </div>

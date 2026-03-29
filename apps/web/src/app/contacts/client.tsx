@@ -13,7 +13,7 @@ export function ContactsClient({
   const [search, setSearch] = useState("");
   const [tagFilter, setTagFilter] = useState("");
 
-  // Extract all unique tags
+  // ユニークなタグを抽出
   const allTags = useMemo(() => {
     const tags = new Set<string>();
     initialContacts.forEach((c) => {
@@ -42,7 +42,7 @@ export function ContactsClient({
   const columns = [
     {
       key: "displayName",
-      label: "Name",
+      label: "名前",
       render: (r: Contact) => (
         <div>
           <span className="font-medium text-zinc-200">
@@ -56,7 +56,7 @@ export function ContactsClient({
     },
     {
       key: "tags",
-      label: "Tags",
+      label: "タグ",
       render: (r: Contact) =>
         r.tags ? (
           <div className="flex flex-wrap gap-1">
@@ -70,7 +70,7 @@ export function ContactsClient({
     },
     {
       key: "lastMessageAt",
-      label: "Last Message",
+      label: "最終メッセージ",
       render: (r: Contact) => (
         <span className="text-xs text-zinc-500">
           {r.lastMessageAt
@@ -81,7 +81,7 @@ export function ContactsClient({
     },
     {
       key: "createdAt",
-      label: "Created",
+      label: "作成日",
       render: (r: Contact) => (
         <span className="text-xs text-zinc-500">
           {new Date(r.createdAt).toLocaleDateString()}
@@ -95,10 +95,10 @@ export function ContactsClient({
       <div className="mt-4 flex flex-wrap items-center gap-3">
         <input
           type="text"
-          placeholder="Search by name or username..."
+          placeholder="名前やユーザー名で検索..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          aria-label="Search contacts"
+          aria-label="コンタクト検索"
           className="rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-500"
         />
 
@@ -106,10 +106,10 @@ export function ContactsClient({
           <select
             value={tagFilter}
             onChange={(e) => setTagFilter(e.target.value)}
-            aria-label="Filter by tag"
+            aria-label="タグで絞り込み"
             className="rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100"
           >
-            <option value="">All Tags</option>
+            <option value="">すべてのタグ</option>
             {allTags.map((tag) => (
               <option key={tag} value={tag}>
                 {tag}
@@ -119,7 +119,7 @@ export function ContactsClient({
         )}
 
         <span className="text-sm text-zinc-400">
-          {filtered.length} contact(s)
+          {filtered.length} 件のコンタクト
         </span>
       </div>
 
@@ -128,7 +128,7 @@ export function ContactsClient({
           columns={columns}
           rows={filtered}
           keyField="id"
-          emptyMessage="No contacts found."
+          emptyMessage="DMを受信するとコンタクトが自動登録されるよ"
         />
       </div>
     </>

@@ -13,10 +13,10 @@ export default async function WebhooksPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold">Webhook Endpoints</h1>
+      <h1 className="text-2xl font-bold">Webhook管理</h1>
       {error && (
         <div className="mt-4 rounded-md border border-amber-700/50 bg-amber-900/20 px-4 py-3 text-sm text-amber-400">
-          ⚠️ Could not load webhook endpoints.
+          ⚠️ Webhookエンドポイントを読み込めませんでした。
         </div>
       )}
       <WebhooksClient initialEndpoints={data} />

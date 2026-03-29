@@ -35,9 +35,9 @@ export function TriggersClient({
       });
       setShowForm(false);
       router.refresh();
-      showToast("Comment trigger created", "success");
+      showToast("コメントトリガーを作成しました", "success");
     } catch (err) {
-      showToast(err instanceof Error ? err.message : "Failed to create");
+      showToast(err instanceof Error ? err.message : "作成に失敗しました");
     } finally {
       setLoading(false);
     }
@@ -49,16 +49,16 @@ export function TriggersClient({
       await deleteCommentTrigger(deleteTarget);
       setDeleteTarget(null);
       router.refresh();
-      showToast("Comment trigger deleted", "success");
+      showToast("コメントトリガーを削除しました", "success");
     } catch (err) {
-      showToast(err instanceof Error ? err.message : "Failed to delete");
+      showToast(err instanceof Error ? err.message : "削除に失敗しました");
     }
   };
 
   const columns = [
     {
       key: "dmResponseText",
-      label: "DM Response",
+      label: "DM返信メッセージ",
       render: (r: CommentTrigger) => (
         <span className="max-w-xs truncate block text-zinc-300">
           {r.dmResponseText}
@@ -67,7 +67,7 @@ export function TriggersClient({
     },
     {
       key: "keywordFilter",
-      label: "Keyword Filter",
+      label: "キーワードフィルター",
       render: (r: CommentTrigger) => (
         <span className="text-zinc-400">
           {r.keywordFilter ?? "—"}
@@ -76,19 +76,19 @@ export function TriggersClient({
     },
     {
       key: "mediaIdFilter",
-      label: "Media ID",
+      label: "メディアID",
       render: (r: CommentTrigger) => (
         <span className="font-mono text-xs text-zinc-500">
-          {r.mediaIdFilter ?? "All"}
+          {r.mediaIdFilter ?? "すべて"}
         </span>
       ),
     },
     {
       key: "enabled",
-      label: "Status",
+      label: "ステータス",
       render: (r: CommentTrigger) => (
         <Badge variant={r.enabled ? "success" : "warning"}>
-          {r.enabled ? "Active" : "Disabled"}
+          {r.enabled ? "有効" : "無効"}
         </Badge>
       ),
     },
@@ -100,7 +100,7 @@ export function TriggersClient({
           onClick={() => setDeleteTarget(r.id)}
           className="text-xs text-red-400 hover:text-red-300"
         >
-          Delete
+          削除
         </button>
       ),
     },
@@ -110,13 +110,13 @@ export function TriggersClient({
     <>
       <div className="mt-4 flex items-center justify-between">
         <p className="text-sm text-zinc-400">
-          {initialTriggers.length} trigger(s)
+          {initialTriggers.length} 件のトリガー
         </p>
         <button
           onClick={() => setShowForm(!showForm)}
           className="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-700"
         >
-          {showForm ? "Cancel" : "+ New Trigger"}
+          {showForm ? "キャンセル" : "+ 新規トリガー"}
         </button>
       </div>
 
@@ -127,30 +127,30 @@ export function TriggersClient({
         >
           <div className="grid gap-3 sm:grid-cols-3">
             <div>
-              <label htmlFor="tr-dmResponseText" className="mb-1 block text-xs text-zinc-400">DM Response Text</label>
+              <label htmlFor="tr-dmResponseText" className="mb-1 block text-xs text-zinc-400">DM返信メッセージ</label>
               <input
                 id="tr-dmResponseText"
                 name="dmResponseText"
-                placeholder="DM response text"
+                placeholder="DM返信メッセージを入力..."
                 required
                 className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-500"
               />
             </div>
             <div>
-              <label htmlFor="tr-keywordFilter" className="mb-1 block text-xs text-zinc-400">Keyword Filter</label>
+              <label htmlFor="tr-keywordFilter" className="mb-1 block text-xs text-zinc-400">キーワードフィルター</label>
               <input
                 id="tr-keywordFilter"
                 name="keywordFilter"
-                placeholder="Keyword filter (optional)"
+                placeholder="キーワードフィルター（任意）"
                 className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-500"
               />
             </div>
             <div>
-              <label htmlFor="tr-mediaIdFilter" className="mb-1 block text-xs text-zinc-400">Media ID Filter</label>
+              <label htmlFor="tr-mediaIdFilter" className="mb-1 block text-xs text-zinc-400">メディアIDフィルター</label>
               <input
                 id="tr-mediaIdFilter"
                 name="mediaIdFilter"
-                placeholder="Media ID filter (optional)"
+                placeholder="メディアIDフィルター（任意）"
                 className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-500"
               />
             </div>
@@ -160,7 +160,7 @@ export function TriggersClient({
             disabled={loading}
             className="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
           >
-            {loading ? "Creating..." : "Create"}
+            {loading ? "作成中..." : "作成"}
           </button>
         </form>
       )}
@@ -170,14 +170,14 @@ export function TriggersClient({
           columns={columns}
           rows={initialTriggers}
           keyField="id"
-          emptyMessage="No comment triggers yet."
+          emptyMessage="コメントトリガーを作成して、投稿コメントからDM自動送信を設定しよう！"
         />
       </div>
 
       <ConfirmDialog
         open={!!deleteTarget}
-        title="Delete Comment Trigger"
-        message="Are you sure? This action cannot be undone."
+        title="コメントトリガーの削除"
+        message="本当に削除する？この操作は取り消せないよ。"
         onConfirm={handleDelete}
         onCancel={() => setDeleteTarget(null)}
       />
