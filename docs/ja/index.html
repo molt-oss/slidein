@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>slidein — セットアップガイド</title>
-  <meta name="description" content="Instagram DM自動化のオープンソース。slideinを7ステップで完全無料セットアップ。">
+  <meta name="description" content="Instagram DM自動化のオープンソース。slideinを5ステップで完全無料セットアップ。">
   <meta property="og:title" content="slidein — セットアップガイド">
   <meta property="og:description" content="Instagram DM自動化のオープンソース — 月額$0。完全セットアップガイド。">
   <meta property="og:url" content="https://molt-oss.github.io/slidein/ja/">
@@ -64,12 +64,10 @@
         <nav id="sidebar-nav" class="space-y-0.5">
           <a href="#prerequisites" class="nav-link block px-3 py-2 text-sm rounded-lg border-l-2 border-transparent text-gray-400 hover:text-gray-200 hover:bg-gray-800/50 transition">事前準備</a>
           <a href="#clone-install" class="nav-link block px-3 py-2 text-sm rounded-lg border-l-2 border-transparent text-gray-400 hover:text-gray-200 hover:bg-gray-800/50 transition">Step 1: クローン &amp; インストール</a>
-          <a href="#cloudflare-setup" class="nav-link block px-3 py-2 text-sm rounded-lg border-l-2 border-transparent text-gray-400 hover:text-gray-200 hover:bg-gray-800/50 transition">Step 2: Cloudflare セットアップ</a>
-          <a href="#meta-app" class="nav-link block px-3 py-2 text-sm rounded-lg border-l-2 border-transparent text-gray-400 hover:text-gray-200 hover:bg-gray-800/50 transition">Step 3: Meta アプリ設定</a>
-          <a href="#deploy" class="nav-link block px-3 py-2 text-sm rounded-lg border-l-2 border-transparent text-gray-400 hover:text-gray-200 hover:bg-gray-800/50 transition">Step 4: Worker デプロイ</a>
-          <a href="#webhook" class="nav-link block px-3 py-2 text-sm rounded-lg border-l-2 border-transparent text-gray-400 hover:text-gray-200 hover:bg-gray-800/50 transition">Step 5: Webhook 接続</a>
-          <a href="#dashboard" class="nav-link block px-3 py-2 text-sm rounded-lg border-l-2 border-transparent text-gray-400 hover:text-gray-200 hover:bg-gray-800/50 transition">Step 6: ダッシュボード</a>
-          <a href="#test" class="nav-link block px-3 py-2 text-sm rounded-lg border-l-2 border-transparent text-gray-400 hover:text-gray-200 hover:bg-gray-800/50 transition">Step 7: テストしよう！</a>
+          <a href="#meta-app" class="nav-link block px-3 py-2 text-sm rounded-lg border-l-2 border-transparent text-gray-400 hover:text-gray-200 hover:bg-gray-800/50 transition">Step 2: Meta アプリ設定</a>
+          <a href="#setup" class="nav-link block px-3 py-2 text-sm rounded-lg border-l-2 border-transparent text-gray-400 hover:text-gray-200 hover:bg-gray-800/50 transition">Step 3: ワンコマンドセットアップ</a>
+          <a href="#webhook" class="nav-link block px-3 py-2 text-sm rounded-lg border-l-2 border-transparent text-gray-400 hover:text-gray-200 hover:bg-gray-800/50 transition">Step 4: Webhook 接続</a>
+          <a href="#test" class="nav-link block px-3 py-2 text-sm rounded-lg border-l-2 border-transparent text-gray-400 hover:text-gray-200 hover:bg-gray-800/50 transition">Step 5: テストしよう！</a>
           <a href="#troubleshooting" class="nav-link block px-3 py-2 text-sm rounded-lg border-l-2 border-transparent text-gray-400 hover:text-gray-200 hover:bg-gray-800/50 transition">トラブルシューティング</a>
           <a href="#whats-next" class="nav-link block px-3 py-2 text-sm rounded-lg border-l-2 border-transparent text-gray-400 hover:text-gray-200 hover:bg-gray-800/50 transition">次にやること</a>
         </nav>
@@ -95,7 +93,7 @@
           <span>🛝</span> セットアップガイド
         </div>
         <h1 class="text-4xl lg:text-5xl font-extrabold mb-4">
-          <span class="bg-gradient-to-r from-brand-400 to-purple-400 bg-clip-text text-transparent">slidein</span> を<br>30分でセットアップ
+          <span class="bg-gradient-to-r from-brand-400 to-purple-400 bg-clip-text text-transparent">slidein</span> を<br>15分でセットアップ
         </h1>
         <p class="text-lg text-gray-400 max-w-2xl mb-6">
           Instagram DM自動化のオープンソース — <strong class="text-white">月額$0</strong>。ManyChatの代わりに自分のCloudflare Workersでやっちゃおう 🔥
@@ -170,66 +168,21 @@ pnpm install</code></pre>
         </div>
       </section>
 
-      <!-- Step 2: Cloudflare セットアップ -->
-      <section id="cloudflare-setup" class="mb-16">
-        <div class="flex items-center gap-3 mb-6">
-          <span class="step-badge">2</span>
-          <h2 class="text-2xl font-bold">Cloudflare セットアップ</h2>
-        </div>
-
-        <h3 class="text-lg font-semibold mb-3">2.1 — Wrangler にログイン</h3>
-        <div class="code-block relative rounded-xl bg-gray-900 border border-gray-800 overflow-hidden mb-6">
-          <div class="flex items-center justify-between px-4 py-2 bg-gray-800/50 border-b border-gray-800">
-            <span class="text-xs text-gray-500 font-mono">bash</span>
-            <button onclick="copyCode(this)" class="copy-btn px-2 py-1 text-xs text-gray-400 rounded hover:text-white transition">コピー</button>
-          </div>
-          <pre class="p-4 overflow-x-auto text-sm"><code class="text-gray-300">npx wrangler login</code></pre>
-        </div>
-
-        <h3 class="text-lg font-semibold mb-3">2.2 — D1 データベースを作成</h3>
-        <div class="code-block relative rounded-xl bg-gray-900 border border-gray-800 overflow-hidden mb-4">
-          <div class="flex items-center justify-between px-4 py-2 bg-gray-800/50 border-b border-gray-800">
-            <span class="text-xs text-gray-500 font-mono">bash</span>
-            <button onclick="copyCode(this)" class="copy-btn px-2 py-1 text-xs text-gray-400 rounded hover:text-white transition">コピー</button>
-          </div>
-          <pre class="p-4 overflow-x-auto text-sm"><code class="text-gray-300">npx wrangler d1 create slidein-db</code></pre>
-        </div>
-        <div class="p-4 rounded-xl bg-brand-500/5 border border-brand-500/20 mb-6">
-          <p class="text-sm text-gray-300">📋 出力された <code class="px-1.5 py-0.5 rounded bg-gray-800 text-brand-400">database_id</code> をコピーして、<code class="px-1.5 py-0.5 rounded bg-gray-800 text-brand-400">apps/worker/wrangler.toml</code> に貼り付けてね:</p>
-          <pre class="mt-2 text-sm text-gray-400 font-mono">database_id = "YOUR_D1_DATABASE_ID"  ← ここを置き換えるよ</pre>
-        </div>
-
-        <h3 class="text-lg font-semibold mb-3">2.3 — マイグレーション実行</h3>
-        <p class="text-gray-400 text-sm mb-3">全6つのマイグレーションを順番に実行して、データベースのスキーマをセットアップするよ:</p>
-        <div class="code-block relative rounded-xl bg-gray-900 border border-gray-800 overflow-hidden mb-4">
-          <div class="flex items-center justify-between px-4 py-2 bg-gray-800/50 border-b border-gray-800">
-            <span class="text-xs text-gray-500 font-mono">bash</span>
-            <button onclick="copyCode(this)" class="copy-btn px-2 py-1 text-xs text-gray-400 rounded hover:text-white transition">コピー</button>
-          </div>
-          <pre class="p-4 overflow-x-auto text-sm"><code class="text-gray-300">npx wrangler d1 execute slidein-db --remote --file=packages/db/migrations/0001_initial_schema.sql
-npx wrangler d1 execute slidein-db --remote --file=packages/db/migrations/0002_pending_messages.sql
-npx wrangler d1 execute slidein-db --remote --file=packages/db/migrations/0003_scenarios.sql
-npx wrangler d1 execute slidein-db --remote --file=packages/db/migrations/0004_phase3_batch1.sql
-npx wrangler d1 execute slidein-db --remote --file=packages/db/migrations/0005_phase3_batch2.sql
-npx wrangler d1 execute slidein-db --remote --file=packages/db/migrations/0006_phase3_batch3.sql</code></pre>
-        </div>
-      </section>
-
-      <!-- Step 3: Meta アプリ設定 -->
+      <!-- Step 2: Meta アプリ設定 -->
       <section id="meta-app" class="mb-16">
         <div class="flex items-center gap-3 mb-6">
-          <span class="step-badge">3</span>
+          <span class="step-badge">2</span>
           <h2 class="text-2xl font-bold">Meta アプリ設定</h2>
         </div>
 
         <div class="space-y-6">
           <div>
-            <h3 class="text-lg font-semibold mb-2">3.1 — 開発者として登録</h3>
+            <h3 class="text-lg font-semibold mb-2">2.1 — 開発者として登録</h3>
             <p class="text-gray-400 text-sm"><a href="https://developers.facebook.com/" target="_blank" class="text-brand-400 hover:underline">developers.facebook.com</a> にアクセスして、まだの人はFacebookアカウントを開発者として登録してね。</p>
           </div>
 
           <div>
-            <h3 class="text-lg font-semibold mb-2">3.2 — 新しいアプリを作成</h3>
+            <h3 class="text-lg font-semibold mb-2">2.2 — 新しいアプリを作成</h3>
             <ol class="list-decimal list-inside space-y-2 text-sm text-gray-400">
               <li><strong class="text-white">Create App</strong> をクリック</li>
               <li>ユースケース → <strong class="text-white">"Other"</strong> を選択</li>
@@ -240,12 +193,12 @@ npx wrangler d1 execute slidein-db --remote --file=packages/db/migrations/0006_p
           </div>
 
           <div>
-            <h3 class="text-lg font-semibold mb-2">3.3 — Instagram APIを追加</h3>
+            <h3 class="text-lg font-semibold mb-2">2.3 — Instagram APIを追加</h3>
             <p class="text-gray-400 text-sm">アプリのダッシュボードで「Add Products」の中にある <strong class="text-white">Instagram</strong> を見つけて、<strong class="text-white">Set Up</strong> をクリックしてね。</p>
           </div>
 
           <div>
-            <h3 class="text-lg font-semibold mb-2">3.4 — Instagram テスターを追加</h3>
+            <h3 class="text-lg font-semibold mb-2">2.4 — Instagram テスターを追加</h3>
             <ol class="list-decimal list-inside space-y-2 text-sm text-gray-400">
               <li>左のサイドバーから <strong class="text-white">App Roles → Roles</strong> に移動</li>
               <li><strong class="text-white">Instagram Testers</strong> の下にある <strong class="text-white">Add Instagram Testers</strong> をクリック</li>
@@ -255,7 +208,8 @@ npx wrangler d1 execute slidein-db --remote --file=packages/db/migrations/0006_p
           </div>
 
           <div>
-            <h3 class="text-lg font-semibold mb-2">3.5 — 認証情報をゲットしよう</h3>
+            <h3 class="text-lg font-semibold mb-2">2.5 — 認証情報をゲットしよう</h3>
+            <p class="text-gray-400 text-sm mb-3">次のステップで使うから、メモしておいてね！</p>
             <div class="overflow-x-auto">
               <table class="w-full text-sm rounded-xl overflow-hidden">
                 <thead>
@@ -277,10 +231,6 @@ npx wrangler d1 execute slidein-db --remote --file=packages/db/migrations/0006_p
                     <td class="px-4 py-3"><code class="text-brand-400">Instagram Account ID</code></td>
                     <td class="px-4 py-3 text-gray-400">Instagram → API Setup → 「Instagram Account ID」として表示されてるよ</td>
                   </tr>
-                  <tr class="bg-gray-900">
-                    <td class="px-4 py-3"><code class="text-brand-400">Verify Token</code></td>
-                    <td class="px-4 py-3 text-gray-400">好きなランダム文字列でOK（例: <code class="px-1 py-0.5 rounded bg-gray-800">my-slidein-verify-2024</code>）</td>
-                  </tr>
                 </tbody>
               </table>
             </div>
@@ -288,47 +238,66 @@ npx wrangler d1 execute slidein-db --remote --file=packages/db/migrations/0006_p
         </div>
       </section>
 
-      <!-- Step 4: Worker デプロイ -->
-      <section id="deploy" class="mb-16">
+      <!-- Step 3: ワンコマンドセットアップ -->
+      <section id="setup" class="mb-16">
         <div class="flex items-center gap-3 mb-6">
-          <span class="step-badge">4</span>
-          <h2 class="text-2xl font-bold">Worker デプロイ</h2>
+          <span class="step-badge">3</span>
+          <h2 class="text-2xl font-bold">ワンコマンドセットアップ ⚡</h2>
         </div>
 
-        <h3 class="text-lg font-semibold mb-3">4.1 — シークレットを設定</h3>
-        <p class="text-gray-400 text-sm mb-3">各コマンドを実行して、聞かれたら対応する値を貼り付けてね:</p>
+        <p class="text-gray-400 mb-4">このコマンド1つで、データベース作成・マイグレーション・シークレット設定・デプロイ・ダッシュボード設定まで全部やってくれるよ:</p>
+
         <div class="code-block relative rounded-xl bg-gray-900 border border-gray-800 overflow-hidden mb-6">
           <div class="flex items-center justify-between px-4 py-2 bg-gray-800/50 border-b border-gray-800">
             <span class="text-xs text-gray-500 font-mono">bash</span>
             <button onclick="copyCode(this)" class="copy-btn px-2 py-1 text-xs text-gray-400 rounded hover:text-white transition">コピー</button>
           </div>
-          <pre class="p-4 overflow-x-auto text-sm"><code class="text-gray-300">npx wrangler secret put META_APP_SECRET
-npx wrangler secret put META_ACCESS_TOKEN
-npx wrangler secret put META_VERIFY_TOKEN
-npx wrangler secret put ADMIN_API_KEY
-npx wrangler secret put IG_ACCOUNT_ID</code></pre>
-        </div>
-        <div class="p-4 rounded-xl bg-yellow-500/5 border border-yellow-500/20 mb-6">
-          <p class="text-sm text-gray-300">💡 <strong>ADMIN_API_KEY</strong> はダッシュボードがWorkerと通信するためのキーだよ。ランダムな文字列を生成してね: <code class="px-1.5 py-0.5 rounded bg-gray-800 text-yellow-400">openssl rand -hex 32</code></p>
+          <pre class="p-4 overflow-x-auto text-sm"><code class="text-gray-300">pnpm run setup</code></pre>
         </div>
 
-        <h3 class="text-lg font-semibold mb-3">4.2 — デプロイ</h3>
-        <div class="code-block relative rounded-xl bg-gray-900 border border-gray-800 overflow-hidden mb-4">
-          <div class="flex items-center justify-between px-4 py-2 bg-gray-800/50 border-b border-gray-800">
-            <span class="text-xs text-gray-500 font-mono">bash</span>
-            <button onclick="copyCode(this)" class="copy-btn px-2 py-1 text-xs text-gray-400 rounded hover:text-white transition">コピー</button>
+        <div class="p-4 rounded-xl bg-brand-500/5 border border-brand-500/20 mb-6">
+          <p class="text-sm text-gray-300 mb-3">🪄 セットアップウィザードが対話形式でガイドしてくれるよ。Step 2 でメモした値を貼り付けるだけ！自動でやってくれることはこちら:</p>
+          <div class="space-y-2 text-sm text-gray-400">
+            <div class="flex items-center gap-2">
+              <span class="text-green-400">✓</span>
+              <span>Cloudflare ログイン確認（必要ならブラウザが開くよ）</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-green-400">✓</span>
+              <span>Meta の認証情報を対話形式で入力</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-green-400">✓</span>
+              <span>D1 データベース作成 &amp; wrangler.toml に ID を自動書き込み</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-green-400">✓</span>
+              <span>全6本のデータベースマイグレーション実行</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-green-400">✓</span>
+              <span>Worker シークレットを全部設定</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-green-400">✓</span>
+              <span>Worker をデプロイ</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-green-400">✓</span>
+              <span>管理画面のパスワードを自動生成</span>
+            </div>
           </div>
-          <pre class="p-4 overflow-x-auto text-sm"><code class="text-gray-300">npx wrangler deploy --config apps/worker/wrangler.toml</code></pre>
         </div>
-        <div class="p-4 rounded-xl bg-brand-500/5 border border-brand-500/20">
-          <p class="text-sm text-gray-300">📋 出力されるURLをメモしておいてね — こんな感じ:<br><code class="px-1.5 py-0.5 rounded bg-gray-800 text-brand-400">https://slidein-worker.YOUR_SUBDOMAIN.workers.dev</code><br>次のステップで使うよ！</p>
+
+        <div class="p-4 rounded-xl bg-green-500/5 border border-green-500/20">
+          <p class="text-sm text-gray-300">🎉 完了すると <strong class="text-green-400">Worker URL</strong> と <strong class="text-green-400">管理画面パスワード</strong> が表示されるよ。次のステップで使うからメモしておいてね！</p>
         </div>
       </section>
 
-      <!-- Step 5: Webhook 接続 -->
+      <!-- Step 4: Webhook 接続 -->
       <section id="webhook" class="mb-16">
         <div class="flex items-center gap-3 mb-6">
-          <span class="step-badge">5</span>
+          <span class="step-badge">4</span>
           <h2 class="text-2xl font-bold">Webhook 接続</h2>
         </div>
 
@@ -369,47 +338,10 @@ npx wrangler secret put IG_ACCOUNT_ID</code></pre>
         </ol>
       </section>
 
-      <!-- Step 6: ダッシュボード -->
-      <section id="dashboard" class="mb-16">
-        <div class="flex items-center gap-3 mb-6">
-          <span class="step-badge">6</span>
-          <h2 class="text-2xl font-bold">ダッシュボード</h2>
-        </div>
-        <p class="text-gray-400 mb-4">管理ダッシュボードをローカルでセットアップして起動するよ:</p>
-
-        <div class="code-block relative rounded-xl bg-gray-900 border border-gray-800 overflow-hidden mb-6">
-          <div class="flex items-center justify-between px-4 py-2 bg-gray-800/50 border-b border-gray-800">
-            <span class="text-xs text-gray-500 font-mono">bash</span>
-            <button onclick="copyCode(this)" class="copy-btn px-2 py-1 text-xs text-gray-400 rounded hover:text-white transition">コピー</button>
-          </div>
-          <pre class="p-4 overflow-x-auto text-sm"><code class="text-gray-300">cd apps/web
-cp .env.local.example .env.local</code></pre>
-        </div>
-
-        <p class="text-gray-400 text-sm mb-3"><code class="px-1.5 py-0.5 rounded bg-gray-800 text-brand-400">.env.local</code> を自分の値で編集してね:</p>
-        <div class="code-block relative rounded-xl bg-gray-900 border border-gray-800 overflow-hidden mb-6">
-          <div class="flex items-center justify-between px-4 py-2 bg-gray-800/50 border-b border-gray-800">
-            <span class="text-xs text-gray-500 font-mono">.env.local</span>
-            <button onclick="copyCode(this)" class="copy-btn px-2 py-1 text-xs text-gray-400 rounded hover:text-white transition">コピー</button>
-          </div>
-          <pre class="p-4 overflow-x-auto text-sm"><code class="text-gray-300">API_URL=https://slidein-worker.YOUR_SUBDOMAIN.workers.dev
-API_KEY=your-admin-api-key-here</code></pre>
-        </div>
-
-        <p class="text-gray-400 text-sm mb-3">そしたら開発サーバーを起動！</p>
-        <div class="code-block relative rounded-xl bg-gray-900 border border-gray-800 overflow-hidden">
-          <div class="flex items-center justify-between px-4 py-2 bg-gray-800/50 border-b border-gray-800">
-            <span class="text-xs text-gray-500 font-mono">bash</span>
-            <button onclick="copyCode(this)" class="copy-btn px-2 py-1 text-xs text-gray-400 rounded hover:text-white transition">コピー</button>
-          </div>
-          <pre class="p-4 overflow-x-auto text-sm"><code class="text-gray-300">pnpm dev</code></pre>
-        </div>
-      </section>
-
-      <!-- Step 7: テストしよう！ -->
+      <!-- Step 5: テストしよう！ -->
       <section id="test" class="mb-16">
         <div class="flex items-center gap-3 mb-6">
-          <span class="step-badge">7</span>
+          <span class="step-badge">5</span>
           <h2 class="text-2xl font-bold">テストしよう！ 🎉</h2>
         </div>
 
@@ -460,12 +392,12 @@ API_KEY=your-admin-api-key-here</code></pre>
                 <td class="px-4 py-3 text-gray-400">Webhookフィールドで <code class="px-1 py-0.5 rounded bg-gray-800">messages</code> をSubscribeしてるか確認！あとInstagramアカウントがビジネス/クリエイターアカウントになってるかもチェックしてね。</td>
               </tr>
               <tr class="bg-gray-900">
-                <td class="px-4 py-3 text-gray-300">D1 マイグレーションエラー</td>
-                <td class="px-4 py-3 text-gray-400">wrangler.tomlの <code class="px-1 py-0.5 rounded bg-gray-800">YOUR_D1_DATABASE_ID</code> を実際のデータベースIDに置き換えたか確認してね。</td>
+                <td class="px-4 py-3 text-gray-300">セットアップスクリプトが失敗する</td>
+                <td class="px-4 py-3 text-gray-400">Cloudflareにログイン済みか確認してね（<code class="px-1 py-0.5 rounded bg-gray-800">npx wrangler login</code>）。あとNode.js 20+が入ってるかも確認！<code class="px-1 py-0.5 rounded bg-gray-800">pnpm run setup</code> は途中から再実行できるよ。</td>
               </tr>
               <tr class="bg-gray-900">
                 <td class="px-4 py-3 text-gray-300">ダッシュボードで「Unauthorized」が出る</td>
-                <td class="px-4 py-3 text-gray-400">.env.localの <code class="px-1 py-0.5 rounded bg-gray-800">API_KEY</code> がWorkerの <code class="px-1 py-0.5 rounded bg-gray-800">ADMIN_API_KEY</code> シークレットと一致してるか確認してね。</td>
+                <td class="px-4 py-3 text-gray-400"><code class="px-1 py-0.5 rounded bg-gray-800">pnpm run setup</code> の最後に表示されたパスワードを使ってね。忘れたら <code class="px-1 py-0.5 rounded bg-gray-800">.env.local</code> ファイルを確認するか、セットアップを再実行してね。</td>
               </tr>
               <tr class="bg-gray-900">
                 <td class="px-4 py-3 text-gray-300">トークンが期限切れ/無効</td>
