@@ -184,17 +184,28 @@ pnpm install</code></pre>
           <div>
             <h3 class="text-lg font-semibold mb-2">2.2 — Create a New App</h3>
             <ol class="list-decimal list-inside space-y-2 text-sm text-gray-400">
+              <li>Go to <a href="https://developers.facebook.com/apps/" target="_blank" class="text-brand-400 hover:underline">developers.facebook.com/apps</a></li>
               <li>Click <strong class="text-white">Create App</strong></li>
-              <li>Use case → select <strong class="text-white">"Other"</strong></li>
-              <li>App type → select <strong class="text-white">"Business"</strong></li>
-              <li>Fill in app name (e.g., <code class="px-1.5 py-0.5 rounded bg-gray-800">slidein-myapp</code>) and contact email</li>
-              <li>Click <strong class="text-white">Create App</strong></li>
+              <li>Fill in app name (e.g., <code class="px-1.5 py-0.5 rounded bg-gray-800">slidein</code>) and contact email → Next</li>
             </ol>
           </div>
 
           <div>
-            <h3 class="text-lg font-semibold mb-2">2.3 — Add Instagram API</h3>
-            <p class="text-gray-400 text-sm">In your app dashboard, find <strong class="text-white">Instagram</strong> under "Add Products" and click <strong class="text-white">Set Up</strong>.</p>
+            <h3 class="text-lg font-semibold mb-2">2.3 — Choose Use Case</h3>
+            <p class="text-gray-400 text-sm mb-2">You'll see a use case selection screen. This is the important part:</p>
+            <ol class="list-decimal list-inside space-y-2 text-sm text-gray-400">
+              <li>In the left filter, click <strong class="text-white">"Business Messaging"</strong></li>
+              <li>Check <strong class="text-white">"Manage messages and content on Instagram"</strong> ✅</li>
+              <li>Click <strong class="text-white">Next</strong></li>
+              <li>Select your Business Portfolio (Facebook Page) — create one if you don't have it</li>
+              <li>Click <strong class="text-white">Create App</strong></li>
+            </ol>
+            <div class="mt-3 p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20 text-sm text-gray-300">
+              ⚠️ Don't select "Other" or "Advertising" — Instagram API won't be available! Make sure to pick <strong class="text-white">"Business Messaging" → "Manage messages and content on Instagram"</strong>.
+            </div>
+            <div class="mt-3 p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20 text-sm text-gray-300">
+              ⚠️ The dashboard will show "Business Verification" and "App Review" steps — <strong class="text-white">you can skip both!</strong> slidein works in Development Mode, which doesn't require either.
+            </div>
           </div>
 
           <div>
