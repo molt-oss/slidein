@@ -9,6 +9,7 @@ export const ContactSchema = z.object({
   username: z.string().nullable(),
   displayName: z.string().nullable(),
   tags: z.array(z.string()),
+  score: z.number(),
   firstSeenAt: z.string(),
   lastMessageAt: z.string(),
 });

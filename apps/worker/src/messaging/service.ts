@@ -7,8 +7,11 @@ import { sendTextMessage, consumeToken } from "@slidein/meta-sdk";
 import { ContactService } from "../contacts/service.js";
 import { KeywordMatchService } from "../triggers/keyword-match-service.js";
 import { ScenarioTriggerService } from "../triggers/scenario-trigger-service.js";
+import { ScoringService } from "../scoring/service.js";
+import { AutomationService } from "../automations/service.js";
 import { MessageRepository } from "./repository.js";
 import { PendingMessageRepository } from "./pending-message-repository.js";
+import { resolveTemplate, hasTemplateVars } from "./template-engine.js";
 
 /** 24時間（ミリ秒） */
 const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000;
@@ -25,6 +28,8 @@ export class MessageService {
   private readonly contactService: ContactService;
   private readonly keywordMatchService: KeywordMatchService;
   private readonly scenarioTriggerService: ScenarioTriggerService;
+  private readonly scoringService: ScoringService;
+  private readonly automationService: AutomationService;
   private readonly deps: MessageServiceDeps;
 
   constructor(deps: MessageServiceDeps) {
@@ -34,6 +39,8 @@ export class MessageService {
     this.contactService = new ContactService(deps.db);
     this.keywordMatchService = new KeywordMatchService(deps.db);
     this.scenarioTriggerService = new ScenarioTriggerService(deps);
+    this.scoringService = new ScoringService(deps.db);
+    this.automationService = new AutomationService(deps);
   }
 
   /** 受信メッセージ処理: ログ保存 + キーワードマッチ → 自動返信 */
@@ -53,24 +60,52 @@ export class MessageService {
       igUserId: senderIgId,
     });
 
-    // 3. キーワードマッチ
+    // 3. スコアリング: メッセージ受信イベント
+    await this.scoringService.recordEvent(contact.id, "message_received");
+
+    // 4. 自動化ルール: メッセージ受信イベント
+    await this.automationService.processEvent("message_received", {
+      contactId: contact.id,
+      tags: contact.tags,
+    });
+
+    // 5. キーワードマッチ
     const matchedRule = await this.keywordMatchService.findMatch(messageText);
 
-    // 4. シナリオトリガーチェック（キーワード）
+    // 6. シナリオトリガーチェック（キーワード）
     await this.scenarioTriggerService.checkKeywordTrigger(
       contact.id,
       messageText,
     );
 
+    if (matchedRule) {
+      // スコアリング: キーワードマッチイベント
+      await this.scoringService.recordEvent(contact.id, "keyword_matched");
+
+      // 自動化ルール: キーワードマッチイベント
+      await this.automationService.processEvent("keyword_matched", {
+        contactId: contact.id,
+        tags: contact.tags,
+        keyword: messageText,
+      });
+    }
+
     if (!matchedRule) {
       return;
     }
 
-    // 5. DM送信（24hチェック + レート制限込み）
+    // 7. テンプレート変数の解決
+    let responseText = matchedRule.responseText;
+    if (hasTemplateVars(responseText)) {
+      const score = await this.scoringService.getScore(contact.id);
+      responseText = resolveTemplate(responseText, { ...contact, score });
+    }
+
+    // 8. DM送信（24hチェック + レート制限込み）
     await this.sendDm(
       contact.id,
       senderIgId,
-      matchedRule.responseText,
+      responseText,
       contact.lastMessageAt,
     );
   }

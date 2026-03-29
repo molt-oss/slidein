@@ -11,6 +11,7 @@ function rowToContact(row: ContactRow): Contact {
     username: row.username,
     displayName: row.display_name,
     tags: JSON.parse(row.tags) as string[],
+    score: row.score ?? 0,
     firstSeenAt: row.first_seen_at,
     lastMessageAt: row.last_message_at,
   };

@@ -234,4 +234,128 @@ export async function fetchEnrollments(scenarioId: string) {
   );
 }
 
+// --- Broadcasts ---
+
+export interface Broadcast {
+  id: string;
+  title: string;
+  messageText: string;
+  targetType: "all" | "tag";
+  targetValue: string | null;
+  status: "draft" | "scheduled" | "sending" | "completed" | "failed";
+  scheduledAt: string | null;
+  sentCount: number;
+  failedCount: number;
+  createdAt: string;
+}
+
+export async function fetchBroadcasts() {
+  return request<{ data: Broadcast[] }>("/api/broadcasts");
+}
+
+export async function createBroadcast(input: {
+  title: string;
+  messageText: string;
+  targetType?: string;
+  targetValue?: string | null;
+  scheduledAt?: string | null;
+}) {
+  return request<{ data: Broadcast }>("/api/broadcasts", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export async function sendBroadcast(id: string) {
+  return request<{ success: boolean }>(`/api/broadcasts/${id}/send`, {
+    method: "POST",
+  });
+}
+
+export async function deleteBroadcast(id: string) {
+  return request<{ success: boolean }>(`/api/broadcasts/${id}`, {
+    method: "DELETE",
+  });
+}
+
+// --- Scoring Rules ---
+
+export interface ScoringRule {
+  id: string;
+  eventType: string;
+  points: number;
+  enabled: boolean;
+  createdAt: string;
+}
+
+export async function fetchScoringRules() {
+  return request<{ data: ScoringRule[] }>("/api/scoring-rules");
+}
+
+export async function createScoringRule(input: {
+  eventType: string;
+  points: number;
+}) {
+  return request<{ data: ScoringRule }>("/api/scoring-rules", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export async function deleteScoringRule(id: string) {
+  return request<{ success: boolean }>(`/api/scoring-rules/${id}`, {
+    method: "DELETE",
+  });
+}
+
+// --- Automation Rules ---
+
+export interface AutomationRule {
+  id: string;
+  name: string;
+  eventType: string;
+  condition: Record<string, unknown>;
+  actions: Array<{ type: string; tag?: string; scenarioId?: string; messageText?: string }>;
+  enabled: boolean;
+  createdAt: string;
+}
+
+export async function fetchAutomations() {
+  return request<{ data: AutomationRule[] }>("/api/automations");
+}
+
+export async function createAutomation(input: {
+  name: string;
+  eventType: string;
+  condition?: Record<string, unknown>;
+  actions: Array<{ type: string; tag?: string; scenarioId?: string; messageText?: string }>;
+}) {
+  return request<{ data: AutomationRule }>("/api/automations", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export async function updateAutomation(
+  id: string,
+  input: {
+    name?: string;
+    eventType?: string;
+    condition?: Record<string, unknown>;
+    actions?: Array<{ type: string; tag?: string; scenarioId?: string; messageText?: string }>;
+    enabled?: boolean;
+  },
+) {
+  return request<{ data: AutomationRule }>(`/api/automations/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(input),
+  });
+}
+
+export async function deleteAutomation(id: string) {
+  return request<{ success: boolean }>(`/api/automations/${id}`, {
+    method: "DELETE",
+  });
+}
+
 export { ApiError };

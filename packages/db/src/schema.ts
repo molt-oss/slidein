@@ -8,6 +8,7 @@ export interface ContactRow {
   username: string | null;
   display_name: string | null;
   tags: string; // JSON array
+  score: number;
   first_seen_at: string;
   last_message_at: string;
 }
@@ -86,4 +87,35 @@ export interface ScenarioEnrollmentRow {
   next_send_at: string | null;
   enrolled_at: string;
   updated_at: string;
+}
+
+export interface BroadcastRow {
+  id: string;
+  title: string;
+  message_text: string;
+  target_type: "all" | "tag";
+  target_value: string | null;
+  status: "draft" | "scheduled" | "sending" | "completed" | "failed";
+  scheduled_at: string | null;
+  sent_count: number;
+  failed_count: number;
+  created_at: string;
+}
+
+export interface ScoringRuleRow {
+  id: string;
+  event_type: "message_received" | "keyword_matched" | "link_clicked" | "scenario_completed";
+  points: number;
+  enabled: number; // 0 or 1
+  created_at: string;
+}
+
+export interface AutomationRuleRow {
+  id: string;
+  name: string;
+  event_type: string;
+  condition_json: string;
+  actions_json: string;
+  enabled: number; // 0 or 1
+  created_at: string;
 }

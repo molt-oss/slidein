@@ -10,7 +10,10 @@ const NAV_ITEMS = [
   { href: "/keywords", label: "Keywords", icon: "🔑" },
   { href: "/triggers", label: "Comment Triggers", icon: "💬" },
   { href: "/scenarios", label: "Scenarios", icon: "🔄" },
+  { href: "/broadcasts", label: "Broadcasts", icon: "📢" },
   { href: "/contacts", label: "Contacts", icon: "👥" },
+  { href: "/scoring", label: "Scoring", icon: "⭐" },
+  { href: "/automations", label: "Automations", icon: "⚡" },
 ];
 
 export function Sidebar() {

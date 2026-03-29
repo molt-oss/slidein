@@ -9,8 +9,12 @@ import type { Env } from "./config/env.js";
 import { webhook } from "./handlers/webhook-handler.js";
 import { api } from "./handlers/api-handler.js";
 import { scenarioApi } from "./handlers/scenario-api-handler.js";
+import { broadcastApi } from "./handlers/broadcast-api-handler.js";
+import { scoringApi } from "./handlers/scoring-api-handler.js";
+import { automationApi } from "./handlers/automation-api-handler.js";
 import { MessageService } from "./messaging/service.js";
 import { ScenarioService } from "./scenarios/service.js";
+import { BroadcastService } from "./broadcasts/service.js";
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -25,6 +29,15 @@ app.route("/", api);
 
 // シナリオ API ルート
 app.route("/", scenarioApi);
+
+// ブロードキャスト API ルート
+app.route("/", broadcastApi);
+
+// スコアリング API ルート
+app.route("/", scoringApi);
+
+// 自動化ルール API ルート
+app.route("/", automationApi);
 
 // 404 ハンドラ
 app.notFound((c) => c.json({ error: "Not found" }, 404));
@@ -64,6 +77,10 @@ export default {
         structuredLog("info", "Cron trigger: processing scenario steps");
         const scenarioService = new ScenarioService(deps);
         await scenarioService.processReadySteps();
+
+        structuredLog("info", "Cron trigger: processing scheduled broadcasts");
+        const broadcastService = new BroadcastService(deps);
+        await broadcastService.processScheduled();
       })(),
     );
   },
