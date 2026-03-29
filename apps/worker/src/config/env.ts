@@ -8,4 +8,5 @@ export interface Env {
   META_ACCESS_TOKEN: string;
   META_VERIFY_TOKEN: string;
   IG_ACCOUNT_ID: string;
+  ADMIN_API_KEY: string;
 }

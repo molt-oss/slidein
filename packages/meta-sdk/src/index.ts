@@ -4,7 +4,12 @@
 
 export { sendTextMessage } from "./send-message.js";
 export { verifyWebhookSignature } from "./verify-signature.js";
-export { consumeToken, type RateLimiterDeps } from "./rate-limiter.js";
+export {
+  consumeToken,
+  MAX_TOKENS,
+  REFILL_INTERVAL_MS,
+  type RateLimiterDeps,
+} from "./rate-limiter.js";
 export {
   WebhookPayloadSchema,
   WebhookEntrySchema,

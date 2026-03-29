@@ -1,73 +1,80 @@
 /**
  * TokenBucket レート制限 — D1 に状態保存
- * 200通/時間を遵守
+ * 200通/時間を遵守。アトミックなトークン消費で競合状態を防止。
  */
 
-const MAX_TOKENS = 200;
-const REFILL_INTERVAL_MS = 60 * 60 * 1000; // 1時間
+export const MAX_TOKENS = 200;
+export const REFILL_INTERVAL_MS = 60 * 60 * 1000; // 1時間
 
 export interface RateLimiterDeps {
   db: D1Database;
 }
 
-interface TokenRow {
-  tokens: number;
-  last_refill_at: string;
-}
-
 /**
  * トークンを1つ消費する。消費可能なら true を返す。
+ * D1 の単一SQL文でアトミックに処理し、TOCTOU 競合を排除。
  */
 export async function consumeToken(
   deps: RateLimiterDeps,
   bucketKey: string,
 ): Promise<boolean> {
   const { db } = deps;
-
-  // バケットを取得 or 初期化
-  const row = await db
-    .prepare(
-      "SELECT tokens, last_refill_at FROM rate_limit_tokens WHERE bucket_key = ?",
-    )
-    .bind(bucketKey)
-    .first<TokenRow>();
-
   const now = new Date();
+  const nowIso = now.toISOString();
 
-  if (!row) {
-    // 初回: バケット作成（1トークン消費済み）
-    await db
-      .prepare(
-        "INSERT INTO rate_limit_tokens (bucket_key, tokens, last_refill_at) VALUES (?, ?, ?)",
-      )
-      .bind(bucketKey, MAX_TOKENS - 1, now.toISOString())
-      .run();
+  // 1. リフィル + 消費をアトミックに試行
+  //    last_refill_at から REFILL_INTERVAL_MS 以上経過していればトークンをリセットしてから消費
+  const refillResult = await db
+    .prepare(
+      `UPDATE rate_limit_tokens
+       SET tokens = CASE
+         WHEN (julianday(?) - julianday(last_refill_at)) * 86400000 >= ?
+         THEN ? - 1
+         ELSE tokens - 1
+       END,
+       last_refill_at = CASE
+         WHEN (julianday(?) - julianday(last_refill_at)) * 86400000 >= ?
+         THEN ?
+         ELSE last_refill_at
+       END
+       WHERE bucket_key = ?
+         AND (
+           tokens > 0
+           OR (julianday(?) - julianday(last_refill_at)) * 86400000 >= ?
+         )
+       RETURNING tokens`,
+    )
+    .bind(
+      nowIso,
+      REFILL_INTERVAL_MS,
+      MAX_TOKENS,
+      nowIso,
+      REFILL_INTERVAL_MS,
+      nowIso,
+      bucketKey,
+      nowIso,
+      REFILL_INTERVAL_MS,
+    )
+    .first<{ tokens: number }>();
+
+  if (refillResult !== null) {
     return true;
   }
 
-  const lastRefill = new Date(row.last_refill_at);
-  const elapsed = now.getTime() - lastRefill.getTime();
-
-  let currentTokens = row.tokens;
-  let lastRefillAt = row.last_refill_at;
-
-  // リフィル判定
-  if (elapsed >= REFILL_INTERVAL_MS) {
-    currentTokens = MAX_TOKENS;
-    lastRefillAt = now.toISOString();
-  }
-
-  if (currentTokens <= 0) {
-    return false;
-  }
-
-  // トークン消費
-  await db
+  // 2. 行が存在しない場合: 初回バケット作成（1トークン消費済み）
+  //    INSERT OR IGNORE で競合回避
+  const insertResult = await db
     .prepare(
-      "UPDATE rate_limit_tokens SET tokens = ?, last_refill_at = ? WHERE bucket_key = ?",
+      `INSERT OR IGNORE INTO rate_limit_tokens (bucket_key, tokens, last_refill_at)
+       VALUES (?, ?, ?)`,
     )
-    .bind(currentTokens - 1, lastRefillAt, bucketKey)
+    .bind(bucketKey, MAX_TOKENS - 1, nowIso)
     .run();
 
-  return true;
+  if ((insertResult.meta.changes ?? 0) > 0) {
+    return true;
+  }
+
+  // 3. INSERT も UPDATE も成功しなかった = トークン枯渇
+  return false;
 }

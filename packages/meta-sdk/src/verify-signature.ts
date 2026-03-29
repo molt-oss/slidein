@@ -1,6 +1,26 @@
 /**
- * X-Hub-Signature-256 署名検証
+ * X-Hub-Signature-256 署名検証（タイミングセーフ比較）
  */
+
+/**
+ * 定数時間比較 — タイミング攻撃を防ぐ
+ * 両方の文字列をSHA-256ハッシュしてからバイト単位XOR比較する
+ */
+async function timingSafeEqual(a: string, b: string): Promise<boolean> {
+  const encoder = new TextEncoder();
+  const [hashA, hashB] = await Promise.all([
+    crypto.subtle.digest("SHA-256", encoder.encode(a)),
+    crypto.subtle.digest("SHA-256", encoder.encode(b)),
+  ]);
+  const arrA = new Uint8Array(hashA);
+  const arrB = new Uint8Array(hashB);
+  if (arrA.length !== arrB.length) return false;
+  let diff = 0;
+  for (let i = 0; i < arrA.length; i++) {
+    diff |= arrA[i] ^ arrB[i];
+  }
+  return diff === 0;
+}
 
 export async function verifyWebhookSignature(
   payload: string,
@@ -32,5 +52,5 @@ export async function verifyWebhookSignature(
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
 
-  return computedSig === expectedSig;
+  return timingSafeEqual(computedSig, expectedSig);
 }

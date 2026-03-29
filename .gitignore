@@ -32,3 +32,12 @@ coverage/
 # Harness engineering (internal)
 AGENTS.md
 docs/quality/
+
+# Review reports (internal)
+docs/CODE_REVIEW.md
+docs/IMPLEMENTATION_REVIEW.md
+docs/TEST_REVIEW.md
+docs/UX_REVIEW.md
+docs/USER_REVIEW_HAJIME.md
+docs/ADMIN_REVIEW.md
+docs/*_REVIEW.md

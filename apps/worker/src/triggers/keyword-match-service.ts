@@ -5,6 +5,9 @@ import { structuredLog } from "@slidein/shared";
 import type { KeywordRule } from "./types.js";
 import { KeywordRuleRepository } from "./keyword-rule-repository.js";
 
+/** regex パターンの最大長（ReDoS 対策） */
+const MAX_REGEX_LENGTH = 100;
+
 export class KeywordMatchService {
   private readonly repo: KeywordRuleRepository;
 
@@ -41,6 +44,19 @@ export class KeywordMatchService {
     matchType: "exact" | "contains" | "regex",
     responseText: string,
   ): Promise<KeywordRule> {
+    // regex の場合、パターンの妥当性と長さを事前検証
+    if (matchType === "regex") {
+      if (keyword.length > MAX_REGEX_LENGTH) {
+        throw new Error(
+          `Regex pattern exceeds max length of ${MAX_REGEX_LENGTH} characters`,
+        );
+      }
+      try {
+        new RegExp(keyword, "i");
+      } catch {
+        throw new Error(`Invalid regex pattern: ${keyword}`);
+      }
+    }
     return await this.repo.create(keyword, matchType, responseText);
   }
 
@@ -49,7 +65,8 @@ export class KeywordMatchService {
     return await this.repo.delete(id);
   }
 
-  private isMatch(text: string, rule: KeywordRule): boolean {
+  /** パターンマッチ判定（ReDoS 対策付き） */
+  isMatch(text: string, rule: KeywordRule): boolean {
     const lowerText = text.toLowerCase();
     const lowerKeyword = rule.keyword.toLowerCase();
 
@@ -59,6 +76,14 @@ export class KeywordMatchService {
       case "contains":
         return lowerText.includes(lowerKeyword);
       case "regex":
+        // パターン長の上限チェック
+        if (rule.keyword.length > MAX_REGEX_LENGTH) {
+          structuredLog("warn", "Regex pattern too long, skipping", {
+            ruleId: rule.id,
+            length: rule.keyword.length,
+          });
+          return false;
+        }
         try {
           const regex = new RegExp(rule.keyword, "i");
           return regex.test(text);

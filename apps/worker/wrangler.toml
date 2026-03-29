@@ -16,3 +16,8 @@ migrations_dir = "../../packages/db/migrations"
 # META_ACCESS_TOKEN = ""
 # META_VERIFY_TOKEN = ""
 # IG_ACCOUNT_ID = ""
+# ADMIN_API_KEY = ""
+
+# Cron Triggers — 未送信メッセージの再送
+[triggers]
+crons = ["*/5 * * * *"]

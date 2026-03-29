@@ -45,3 +45,13 @@ export interface RateLimitTokenRow {
   tokens: number;
   last_refill_at: string;
 }
+
+export interface PendingMessageRow {
+  id: string;
+  contact_id: string;
+  recipient_ig_id: string;
+  content: string;
+  scheduled_at: string;
+  status: "pending" | "sent" | "failed";
+  created_at: string;
+}

@@ -6,6 +6,7 @@ import { structuredLog } from "@slidein/shared";
 import {
   verifyWebhookSignature,
   WebhookPayloadSchema,
+  type WebhookPayload,
 } from "@slidein/meta-sdk";
 import type { Env } from "../config/env.js";
 import { MessageService } from "../messaging/service.js";
@@ -66,10 +67,10 @@ webhook.post("/webhook", async (c) => {
   return c.text("OK", 200);
 });
 
-/** Webhook ペイロードの非同期処理 */
+/** Webhook ペイロードの非同期処理（Zod スキーマ型で統一） */
 async function processWebhookPayload(
   env: Env,
-  payload: { entry: Array<{ messaging?: Array<{ sender: { id: string }; message?: { mid: string; text?: string } }>; changes?: Array<{ field: string; value: { id: string; text: string; from: { id: string; username?: string }; media?: { id: string } } }> }> },
+  payload: WebhookPayload,
 ): Promise<void> {
   const messageService = new MessageService({
     db: env.DB,
