@@ -78,4 +78,21 @@ export class ContactRepository {
       .bind(JSON.stringify(tags), id)
       .run();
   }
+
+  /** コンタクトのスコアを加算 */
+  async addScore(contactId: string, points: number): Promise<void> {
+    await this.db
+      .prepare("UPDATE contacts SET score = score + ? WHERE id = ?")
+      .bind(points, contactId)
+      .run();
+  }
+
+  /** コンタクトのスコアを取得 */
+  async getScore(contactId: string): Promise<number> {
+    const row = await this.db
+      .prepare("SELECT score FROM contacts WHERE id = ?")
+      .bind(contactId)
+      .first<{ score: number }>();
+    return row?.score ?? 0;
+  }
 }

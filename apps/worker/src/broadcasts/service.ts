@@ -145,10 +145,20 @@ export class BroadcastService {
       }
     }
 
-    await this.repo.updateStatus(broadcast.id, "completed");
-    structuredLog("info", "Broadcast completed", {
-      broadcastId: broadcast.id,
-    });
+    // 全件失敗の場合は failed ステータスにする
+    const updated = await this.repo.findById(broadcast.id);
+    if (updated && updated.sentCount === 0 && updated.failedCount > 0) {
+      await this.repo.updateStatus(broadcast.id, "failed");
+      structuredLog("warn", "Broadcast failed — all messages failed", {
+        broadcastId: broadcast.id,
+        failedCount: updated.failedCount,
+      });
+    } else {
+      await this.repo.updateStatus(broadcast.id, "completed");
+      structuredLog("info", "Broadcast completed", {
+        broadcastId: broadcast.id,
+      });
+    }
   }
 
   private filterTargets(

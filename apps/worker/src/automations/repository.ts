@@ -1,16 +1,49 @@
 /**
  * Automation Rule Repository — D1 CRUD
  */
+import { structuredLog } from "@slidein/shared";
 import type { AutomationRuleRow } from "@slidein/db";
 import type { AutomationRule, AutomationCondition, AutomationAction } from "./types.js";
+import { AutomationActionSchema, AutomationConditionSchema, AutomationEventType } from "./types.js";
 
-function rowToAutomationRule(row: AutomationRuleRow): AutomationRule {
+function rowToAutomationRule(row: AutomationRuleRow): AutomationRule | null {
+  const eventTypeResult = AutomationEventType.safeParse(row.event_type);
+  if (!eventTypeResult.success) {
+    structuredLog("error", "Invalid event_type in automation rule", {
+      ruleId: row.id,
+      eventType: row.event_type,
+    });
+    return null;
+  }
+
+  const conditionResult = AutomationConditionSchema.safeParse(
+    JSON.parse(row.condition_json),
+  );
+  if (!conditionResult.success) {
+    structuredLog("error", "Invalid condition_json in automation rule", {
+      ruleId: row.id,
+      error: conditionResult.error.message,
+    });
+    return null;
+  }
+
+  const actionsResult = AutomationActionSchema.array().safeParse(
+    JSON.parse(row.actions_json),
+  );
+  if (!actionsResult.success) {
+    structuredLog("error", "Invalid actions_json in automation rule", {
+      ruleId: row.id,
+      error: actionsResult.error.message,
+    });
+    return null;
+  }
+
   return {
     id: row.id,
     name: row.name,
-    eventType: row.event_type,
-    condition: JSON.parse(row.condition_json) as AutomationCondition,
-    actions: JSON.parse(row.actions_json) as AutomationAction[],
+    eventType: eventTypeResult.data,
+    condition: conditionResult.data,
+    actions: actionsResult.data,
     enabled: row.enabled === 1,
     createdAt: row.created_at,
   };
@@ -23,7 +56,9 @@ export class AutomationRuleRepository {
     const result = await this.db
       .prepare("SELECT * FROM automation_rules ORDER BY created_at DESC")
       .all<AutomationRuleRow>();
-    return result.results.map(rowToAutomationRule);
+    return result.results
+      .map(rowToAutomationRule)
+      .filter((r): r is AutomationRule => r !== null);
   }
 
   async findById(id: string): Promise<AutomationRule | null> {
@@ -41,7 +76,9 @@ export class AutomationRuleRepository {
       )
       .bind(eventType)
       .all<AutomationRuleRow>();
-    return result.results.map(rowToAutomationRule);
+    return result.results
+      .map(rowToAutomationRule)
+      .filter((r): r is AutomationRule => r !== null);
   }
 
   async create(
@@ -58,7 +95,9 @@ export class AutomationRuleRepository {
       .bind(name, eventType, JSON.stringify(condition), JSON.stringify(actions))
       .first<AutomationRuleRow>();
     if (!row) throw new Error("Failed to create automation rule");
-    return rowToAutomationRule(row);
+    const rule = rowToAutomationRule(row);
+    if (!rule) throw new Error("Failed to parse created automation rule");
+    return rule;
   }
 
   async update(

@@ -11,6 +11,7 @@ import { ContactRepository } from "../contacts/repository.js";
 import { AutomationRuleRepository } from "./repository.js";
 import type {
   AutomationRule,
+  AutomationAction,
   AutomationCondition,
   CreateAutomationRuleInput,
   UpdateAutomationRuleInput,
@@ -134,7 +135,7 @@ export class AutomationService {
   }
 
   private async executeAction(
-    action: { type: string; tag?: string; scenarioId?: string; messageText?: string },
+    action: AutomationAction,
     contactId: string,
   ): Promise<void> {
     switch (action.type) {
@@ -159,10 +160,12 @@ export class AutomationService {
           await this.sendMessage(contactId, action.messageText);
         }
         break;
-      default:
+      default: {
+        const _exhaustive: never = action;
         structuredLog("warn", "Unknown automation action type", {
-          type: action.type,
+          type: (_exhaustive as AutomationAction).type,
         });
+      }
     }
   }
 
