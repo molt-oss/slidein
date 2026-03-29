@@ -550,7 +550,7 @@ export interface AIConfig {
   id: string;
   enabled: boolean;
   provider: "anthropic" | "openai";
-  apiKeyEncrypted: string | null;
+  apiKey: string | null;
   model: string;
   systemPrompt: string | null;
   knowledgeBase: string | null;

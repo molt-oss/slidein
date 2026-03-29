@@ -133,6 +133,18 @@ describe("MCPServer", () => {
     );
   });
 
+  it("initializeでscopeを指定できる", async () => {
+    const res = await server.handleRequest({
+      jsonrpc: "2.0",
+      id: 1,
+      method: "initialize",
+      params: { scope: "read" },
+    });
+
+    const result = res.result as Record<string, unknown>;
+    expect(result.scope).toBe("read");
+  });
+
   it("tools/listでツール一覧を返す", async () => {
     const res = await server.handleRequest({
       jsonrpc: "2.0",
@@ -148,6 +160,50 @@ describe("MCPServer", () => {
     expect(names).toContain("keyword_rules_create");
     expect(names).toContain("ai_config_get");
     expect(names).toContain("broadcasts_send");
+  });
+
+  it("read scopeではwrite系ツールが一覧に出ない", async () => {
+    // Initialize with read scope
+    await server.handleRequest({
+      jsonrpc: "2.0",
+      id: 1,
+      method: "initialize",
+      params: { scope: "read" },
+    });
+
+    const res = await server.handleRequest({
+      jsonrpc: "2.0",
+      id: 2,
+      method: "tools/list",
+    });
+
+    const tools = (res.result as { tools: unknown[] }).tools;
+    const names = tools.map((t: unknown) => (t as { name: string }).name);
+    expect(names).toContain("contacts_list");
+    expect(names).toContain("ai_config_get");
+    expect(names).not.toContain("keyword_rules_create");
+    expect(names).not.toContain("broadcasts_send");
+    expect(names).not.toContain("ai_config_update");
+  });
+
+  it("read scopeではwrite系ツールの呼び出しが拒否される", async () => {
+    // Initialize with read scope
+    await server.handleRequest({
+      jsonrpc: "2.0",
+      id: 1,
+      method: "initialize",
+      params: { scope: "read" },
+    });
+
+    const res = await server.handleRequest({
+      jsonrpc: "2.0",
+      id: 2,
+      method: "tools/call",
+      params: { name: "broadcasts_send", arguments: { id: "b-1" } },
+    });
+
+    expect(res.error).toBeTruthy();
+    expect(res.error!.message).toContain("readwrite");
   });
 
   it("tools/callでcontacts_listを実行できる", async () => {

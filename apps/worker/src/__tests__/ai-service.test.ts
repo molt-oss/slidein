@@ -4,6 +4,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { AIService } from "../ai/service.js";
 import type { AIConfig } from "../ai/types.js";
+import { maskApiKey } from "../ai/types.js";
 import type { Contact } from "../contacts/types.js";
 
 const mockContact: Contact = {
@@ -21,7 +22,7 @@ const mockAnthropicConfig: AIConfig = {
   id: "default",
   enabled: true,
   provider: "anthropic",
-  apiKeyEncrypted: null,
+  apiKey: null,
   model: "claude-sonnet-4-20250514",
   systemPrompt: "You are a shop assistant.",
   knowledgeBase: "We sell shoes. Open 9-5.",
@@ -50,7 +51,7 @@ function createAIConfigD1Mock(config: AIConfig | null = mockAnthropicConfig) {
             id: config.id,
             enabled: config.enabled ? 1 : 0,
             provider: config.provider,
-            api_key_encrypted: config.apiKeyEncrypted,
+            api_key_encrypted: config.apiKey,
             model: config.model,
             system_prompt: config.systemPrompt,
             knowledge_base: config.knowledgeBase,
@@ -123,13 +124,16 @@ describe("AIService", () => {
       }),
     );
 
-    // Verify system prompt contains contact info & knowledge base
+    // MF-3: system prompt にコンタクト情報が含まれない（分離された）
     const callBody = JSON.parse(
       (fetch as ReturnType<typeof vi.fn>).mock.calls[0][1].body,
     );
-    expect(callBody.system).toContain("Test User");
-    expect(callBody.system).toContain("vip, buyer");
-    expect(callBody.system).toContain("We sell shoes");
+    expect(callBody.system).toContain("You are a shop assistant");
+    expect(callBody.system).toContain("Knowledge Base");
+    expect(callBody.system).not.toContain("Test User"); // contact info is in user message now
+    // Contact info is in user message
+    expect(callBody.messages[0].content).toContain("Test User");
+    expect(callBody.messages[0].content).toContain("vip, buyer");
     expect(callBody.max_tokens).toBe(200);
   });
 
@@ -203,5 +207,129 @@ describe("AIService", () => {
 
     const updated = await service.updateConfig({ enabled: true });
     expect(updated).toBeTruthy();
+  });
+
+  // MF-4: 不正なAPIレスポンスはnullを返す
+  it("Anthropicの不正レスポンスはnullを返す", async () => {
+    const db = createAIConfigD1Mock();
+    const service = new AIService({ db, aiApiKey: "test-key" });
+
+    const mockResponse = {
+      ok: true,
+      json: async () => ({ unexpected: "shape" }),
+    };
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      mockResponse as unknown as Response,
+    );
+
+    const result = await service.generateResponse(
+      "Hello",
+      mockContact,
+      mockAnthropicConfig,
+    );
+
+    expect(result).toBeNull();
+  });
+
+  it("OpenAIの不正レスポンスはnullを返す", async () => {
+    const db = createAIConfigD1Mock(mockOpenAIConfig);
+    const service = new AIService({ db, aiApiKey: "test-key" });
+
+    const mockResponse = {
+      ok: true,
+      json: async () => ({ unexpected: "shape" }),
+    };
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      mockResponse as unknown as Response,
+    );
+
+    const result = await service.generateResponse(
+      "Hello",
+      mockContact,
+      mockOpenAIConfig,
+    );
+
+    expect(result).toBeNull();
+  });
+
+  // SF-1: 1000文字超のレスポンスは切り詰める
+  it("1000文字超のAIレスポンスを切り詰める", async () => {
+    const db = createAIConfigD1Mock();
+    const service = new AIService({ db, aiApiKey: "test-key" });
+
+    const longText = "A".repeat(1500);
+    const mockResponse = {
+      ok: true,
+      json: async () => ({
+        content: [{ type: "text", text: longText }],
+      }),
+    };
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      mockResponse as unknown as Response,
+    );
+
+    const result = await service.generateResponse(
+      "Hello",
+      mockContact,
+      mockAnthropicConfig,
+    );
+
+    expect(result).toBeTruthy();
+    expect(result!.length).toBe(1000);
+    expect(result!.endsWith("…")).toBe(true);
+  });
+
+  // MF-3: プロンプトインジェクション対策テスト
+  it("displayNameに制御文字が含まれてもサニタイズされる", async () => {
+    const db = createAIConfigD1Mock();
+    const service = new AIService({ db, aiApiKey: "test-key" });
+
+    const maliciousContact: Contact = {
+      ...mockContact,
+      displayName: "Evil\x00User\x1FName" + "A".repeat(100),
+    };
+
+    const mockResponse = {
+      ok: true,
+      json: async () => ({
+        content: [{ type: "text", text: "Safe response" }],
+      }),
+    };
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      mockResponse as unknown as Response,
+    );
+
+    await service.generateResponse(
+      "Hello",
+      maliciousContact,
+      mockAnthropicConfig,
+    );
+
+    const callBody = JSON.parse(
+      (fetch as ReturnType<typeof vi.fn>).mock.calls[0][1].body,
+    );
+    // User message should not contain control chars
+    const userMsg = callBody.messages[0].content;
+    expect(userMsg).not.toContain("\x00");
+    expect(userMsg).not.toContain("\x1F");
+    // displayName should be truncated to 50 chars
+    expect(userMsg).toContain("EvilUserName");
+    // System prompt should NOT contain contact info
+    expect(callBody.system).not.toContain("EvilUserName");
+  });
+});
+
+// MF-1: maskApiKey のテスト
+describe("maskApiKey", () => {
+  it("nullはnullを返す", () => {
+    expect(maskApiKey(null)).toBeNull();
+  });
+
+  it("短いキーは****を返す", () => {
+    expect(maskApiKey("abc")).toBe("****");
+  });
+
+  it("通常のキーをマスクする", () => {
+    expect(maskApiKey("sk-abc123xyz789")).toBe("sk-ab...****");
   });
 });

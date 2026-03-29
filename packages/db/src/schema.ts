@@ -186,11 +186,16 @@ export interface FormResponseRow {
   created_at: string;
 }
 
+/**
+ * ⚠️ SECURITY: api_key_encrypted カラムは歴史的な命名で、実際には平文保存。
+ * 本番では環境変数 AI_API_KEY を使用すること。
+ * DBにAPIキーを保存する場合は Cloudflare Workers の Secrets 機能を検討すること。
+ */
 export interface AIConfigRow {
   id: string;
   enabled: number; // 0 or 1
   provider: "anthropic" | "openai";
-  api_key_encrypted: string | null;
+  api_key_encrypted: string | null; // DB column name kept for migration compat; actually plaintext
   model: string;
   system_prompt: string | null;
   knowledge_base: string | null;

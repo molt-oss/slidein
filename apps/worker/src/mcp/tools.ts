@@ -1,5 +1,7 @@
 /**
  * MCP ツール定義 — 既存Serviceの薄いラッパー
+ *
+ * MF-2: ツールをread系/write系に分類し、scope パラメータで権限分離
  */
 import type { MCPToolDefinition } from "./types.js";
 import { ContactService } from "../contacts/service.js";
@@ -14,6 +16,8 @@ import { TrackingService } from "../tracking/service.js";
 import { FormService } from "../forms/service.js";
 import { AIService } from "../ai/service.js";
 
+export type MCPScope = "read" | "readwrite";
+
 interface MCPDeps {
   db: D1Database;
   accessToken: string;
@@ -23,7 +27,46 @@ interface MCPDeps {
 
 type ToolHandler = (params: Record<string, unknown>) => Promise<unknown>;
 
-export function getToolDefinitions(): MCPToolDefinition[] {
+/** read系ツール名の集合 */
+const READ_TOOLS = new Set([
+  "contacts_list",
+  "contacts_get",
+  "keyword_rules_list",
+  "comment_triggers_list",
+  "scenarios_list",
+  "broadcasts_list",
+  "scoring_rules_list",
+  "automations_list",
+  "tracked_links_list",
+  "forms_list",
+  "ai_config_get",
+]);
+
+/** write系ツール名の集合 */
+const WRITE_TOOLS = new Set([
+  "keyword_rules_create",
+  "keyword_rules_delete",
+  "comment_triggers_create",
+  "comment_triggers_delete",
+  "scenarios_create",
+  "scenarios_delete",
+  "broadcasts_create",
+  "broadcasts_send",
+  "scoring_rules_create",
+  "automations_create",
+  "tracked_links_create",
+  "forms_create",
+  "ai_config_update",
+]);
+
+export function isWriteTool(toolName: string): boolean {
+  return WRITE_TOOLS.has(toolName);
+}
+
+export function getToolDefinitions(scope: MCPScope = "readwrite"): MCPToolDefinition[] {
+  if (scope === "read") {
+    return TOOL_DEFS.filter((t) => READ_TOOLS.has(t.name));
+  }
   return TOOL_DEFS;
 }
 
@@ -41,10 +84,21 @@ export function createToolHandlers(deps: MCPDeps): Record<string, ToolHandler> {
   const aiService = new AIService({ db: deps.db, aiApiKey: deps.aiApiKey });
 
   return {
+    // --- Read tools ---
     contacts_list: async () => contactService.listAll(),
     contacts_get: async (p) => contactRepo.findById(p.id as string),
 
     keyword_rules_list: async () => keywordService.listAll(),
+    comment_triggers_list: async () => commentTriggerService.listAll(),
+    scenarios_list: async () => scenarioService.listAll(),
+    broadcasts_list: async () => broadcastService.listAll(),
+    scoring_rules_list: async () => scoringService.listRules(),
+    automations_list: async () => automationService.listAll(),
+    tracked_links_list: async () => trackingService.listAll(),
+    forms_list: async () => formService.listForms(),
+    ai_config_get: async () => aiService.getConfig(),
+
+    // --- Write tools ---
     keyword_rules_create: async (p) =>
       keywordService.create(
         p.keyword as string,
@@ -53,7 +107,6 @@ export function createToolHandlers(deps: MCPDeps): Record<string, ToolHandler> {
       ),
     keyword_rules_delete: async (p) => keywordService.delete(p.id as string),
 
-    comment_triggers_list: async () => commentTriggerService.listAll(),
     comment_triggers_create: async (p) =>
       commentTriggerService.create(
         p.dmResponseText as string,
@@ -63,31 +116,24 @@ export function createToolHandlers(deps: MCPDeps): Record<string, ToolHandler> {
     comment_triggers_delete: async (p) =>
       commentTriggerService.delete(p.id as string),
 
-    scenarios_list: async () => scenarioService.listAll(),
     scenarios_create: async (p) => scenarioService.create(p as never),
     scenarios_delete: async (p) => scenarioService.delete(p.id as string),
 
-    broadcasts_list: async () => broadcastService.listAll(),
     broadcasts_create: async (p) => broadcastService.create(p as never),
     broadcasts_send: async (p) => broadcastService.send(p.id as string),
 
-    scoring_rules_list: async () => scoringService.listRules(),
     scoring_rules_create: async (p) =>
       scoringService.createRule({
         eventType: p.eventType as never,
         points: p.points as number,
       }),
 
-    automations_list: async () => automationService.listAll(),
     automations_create: async (p) => automationService.create(p as never),
 
-    tracked_links_list: async () => trackingService.listAll(),
     tracked_links_create: async (p) => trackingService.createLink(p as never),
 
-    forms_list: async () => formService.listForms(),
     forms_create: async (p) => formService.createForm(p as never),
 
-    ai_config_get: async () => aiService.getConfig(),
     ai_config_update: async (p) => aiService.updateConfig(p as never),
   };
 }

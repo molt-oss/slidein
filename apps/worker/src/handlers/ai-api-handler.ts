@@ -20,13 +20,8 @@ aiApi.get("/api/ai-config", async (c) => {
     return c.json({ error: "AI config not found" }, 404);
   }
 
-  // APIキーはマスクして返す
-  const safeConfig = {
-    ...config,
-    apiKeyEncrypted: config.apiKeyEncrypted ? "********" : null,
-  };
-
-  return c.json({ data: safeConfig });
+  // getConfig() は既にマスク済みの config を返す
+  return c.json({ data: config });
 });
 
 aiApi.put("/api/ai-config", async (c) => {
@@ -38,6 +33,7 @@ aiApi.put("/api/ai-config", async (c) => {
   }
 
   const service = new AIService({ db: c.env.DB, aiApiKey: c.env.AI_API_KEY });
+  // SF-7: updateConfig() は既にマスク済みの config を返す（repository.update がマスク済み）
   const config = await service.updateConfig(parseResult.data);
 
   structuredLog("info", "AI config updated via API");
