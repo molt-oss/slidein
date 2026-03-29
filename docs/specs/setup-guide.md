@@ -11,15 +11,29 @@
 | Facebook ページ | ✅ | 無料（IGビジネスアカウントに紐付け必要） |
 | Claude / OpenAI API キー | オプション | 従量課金（AI自動応答を使う場合のみ） |
 
-## クイックスタート（推奨）
+## クイックスタート（推奨）✨
 
 ```bash
-npx create-slidein
+git clone https://github.com/molt-oss/slidein.git
+cd slidein
+pnpm install
+pnpm setup
 ```
 
-対話形式で全ての設定が完了します。詳細は下記の手動セットアップを参照。
+`pnpm setup` で対話形式のセットアップウィザードが起動し、以下を自動で行います:
+- Cloudflare (Wrangler) ログイン確認
+- D1データベース作成 + `wrangler.toml` 自動更新
+- マイグレーション一括実行
+- シークレット設定（ADMIN_API_KEY等は自動生成も可）
+- ワンクリックデプロイ
+
+セットアップ完了後、Meta Developer ConsoleでWebhookを設定すれば動作開始です。
+
+---
 
 ## 手動セットアップ
+
+上記の `pnpm setup` で問題が出た場合や、個別にステップを実行したい場合はこちら。
 
 ### 1. リポジトリのクローン
 
@@ -51,12 +65,12 @@ database_id = "ここに貼り付け"
 ### 3. データベースのマイグレーション
 
 ```bash
-npx wrangler d1 execute slidein-db --file=packages/db/migrations/0001_initial_schema.sql
-npx wrangler d1 execute slidein-db --file=packages/db/migrations/0002_pending_messages.sql
-npx wrangler d1 execute slidein-db --file=packages/db/migrations/0003_scenarios.sql
-npx wrangler d1 execute slidein-db --file=packages/db/migrations/0004_broadcasts_scoring_automations.sql
-npx wrangler d1 execute slidein-db --file=packages/db/migrations/0005_tracking_webhooks_conversions_forms_delivery.sql
-npx wrangler d1 execute slidein-db --file=packages/db/migrations/0006_ai_config.sql
+npx wrangler d1 execute slidein-db --remote --file=packages/db/migrations/0001_initial_schema.sql
+npx wrangler d1 execute slidein-db --remote --file=packages/db/migrations/0002_pending_messages.sql
+npx wrangler d1 execute slidein-db --remote --file=packages/db/migrations/0003_scenarios.sql
+npx wrangler d1 execute slidein-db --remote --file=packages/db/migrations/0004_phase3_batch1.sql
+npx wrangler d1 execute slidein-db --remote --file=packages/db/migrations/0005_phase3_batch2.sql
+npx wrangler d1 execute slidein-db --remote --file=packages/db/migrations/0006_phase3_batch3.sql
 ```
 
 ### 4. Meta Developer App の作成
