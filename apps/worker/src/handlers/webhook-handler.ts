@@ -108,6 +108,7 @@ async function processWebhookPayload(
               comment.from.id,
               trigger.dmResponseText,
               trigger.id,
+              comment.text,
             );
           }
         }

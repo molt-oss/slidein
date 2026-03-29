@@ -6,6 +6,7 @@ import { structuredLog } from "@slidein/shared";
 import { sendTextMessage, consumeToken } from "@slidein/meta-sdk";
 import { ContactService } from "../contacts/service.js";
 import { KeywordMatchService } from "../triggers/keyword-match-service.js";
+import { ScenarioTriggerService } from "../triggers/scenario-trigger-service.js";
 import { MessageRepository } from "./repository.js";
 import { PendingMessageRepository } from "./pending-message-repository.js";
 
@@ -23,6 +24,7 @@ export class MessageService {
   private readonly pendingRepo: PendingMessageRepository;
   private readonly contactService: ContactService;
   private readonly keywordMatchService: KeywordMatchService;
+  private readonly scenarioTriggerService: ScenarioTriggerService;
   private readonly deps: MessageServiceDeps;
 
   constructor(deps: MessageServiceDeps) {
@@ -31,6 +33,7 @@ export class MessageService {
     this.pendingRepo = new PendingMessageRepository(deps.db);
     this.contactService = new ContactService(deps.db);
     this.keywordMatchService = new KeywordMatchService(deps.db);
+    this.scenarioTriggerService = new ScenarioTriggerService(deps);
   }
 
   /** 受信メッセージ処理: ログ保存 + キーワードマッチ → 自動返信 */
@@ -52,11 +55,18 @@ export class MessageService {
 
     // 3. キーワードマッチ
     const matchedRule = await this.keywordMatchService.findMatch(messageText);
+
+    // 4. シナリオトリガーチェック（キーワード）
+    await this.scenarioTriggerService.checkKeywordTrigger(
+      contact.id,
+      messageText,
+    );
+
     if (!matchedRule) {
       return;
     }
 
-    // 4. DM送信（24hチェック + レート制限込み）
+    // 5. DM送信（24hチェック + レート制限込み）
     await this.sendDm(
       contact.id,
       senderIgId,
@@ -70,6 +80,7 @@ export class MessageService {
     recipientIgId: string,
     responseText: string,
     triggerId: string,
+    commentText?: string,
   ): Promise<void> {
     const contact = await this.contactService.getOrCreate(recipientIgId);
 
@@ -77,6 +88,14 @@ export class MessageService {
       contactId: contact.id,
       triggerId,
     });
+
+    // シナリオトリガーチェック（コメント）
+    if (commentText) {
+      await this.scenarioTriggerService.checkCommentTrigger(
+        contact.id,
+        commentText,
+      );
+    }
 
     await this.sendDm(
       contact.id,

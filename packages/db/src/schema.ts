@@ -55,3 +55,35 @@ export interface PendingMessageRow {
   status: "pending" | "sent" | "failed";
   created_at: string;
 }
+
+export interface ScenarioRow {
+  id: string;
+  name: string;
+  description: string | null;
+  trigger_type: "keyword" | "comment" | "api";
+  trigger_value: string | null;
+  enabled: number; // 0 or 1
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ScenarioStepRow {
+  id: string;
+  scenario_id: string;
+  step_order: number;
+  message_text: string;
+  delay_seconds: number;
+  condition_tag: string | null;
+  created_at: string;
+}
+
+export interface ScenarioEnrollmentRow {
+  id: string;
+  contact_id: string;
+  scenario_id: string;
+  current_step_order: number;
+  status: "active" | "completed" | "cancelled";
+  next_send_at: string | null;
+  enrolled_at: string;
+  updated_at: string;
+}

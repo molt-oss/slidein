@@ -8,7 +8,9 @@ import { structuredLog } from "@slidein/shared";
 import type { Env } from "./config/env.js";
 import { webhook } from "./handlers/webhook-handler.js";
 import { api } from "./handlers/api-handler.js";
+import { scenarioApi } from "./handlers/scenario-api-handler.js";
 import { MessageService } from "./messaging/service.js";
+import { ScenarioService } from "./scenarios/service.js";
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -20,6 +22,9 @@ app.route("/", webhook);
 
 // 管理 API ルート
 app.route("/", api);
+
+// シナリオ API ルート
+app.route("/", scenarioApi);
 
 // 404 ハンドラ
 app.notFound((c) => c.json({ error: "Not found" }, 404));
@@ -38,21 +43,27 @@ app.onError((err, c) => {
 export default {
   fetch: app.fetch,
 
-  /** Cron Trigger — 未送信メッセージの再送 */
+  /** Cron Trigger — 未送信メッセージの再送 + シナリオステップ配信 */
   async scheduled(
     _event: ScheduledEvent,
     env: Env,
     ctx: ExecutionContext,
   ): Promise<void> {
+    const deps = {
+      db: env.DB,
+      accessToken: env.META_ACCESS_TOKEN,
+      igAccountId: env.IG_ACCOUNT_ID,
+    };
+
     ctx.waitUntil(
       (async () => {
         structuredLog("info", "Cron trigger: processing pending messages");
-        const messageService = new MessageService({
-          db: env.DB,
-          accessToken: env.META_ACCESS_TOKEN,
-          igAccountId: env.IG_ACCOUNT_ID,
-        });
+        const messageService = new MessageService(deps);
         await messageService.processPendingMessages();
+
+        structuredLog("info", "Cron trigger: processing scenario steps");
+        const scenarioService = new ScenarioService(deps);
+        await scenarioService.processReadySteps();
       })(),
     );
   },

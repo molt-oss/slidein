@@ -19,6 +19,14 @@ function rowToContact(row: ContactRow): Contact {
 export class ContactRepository {
   constructor(private readonly db: D1Database) {}
 
+  async findById(id: string): Promise<Contact | null> {
+    const row = await this.db
+      .prepare("SELECT * FROM contacts WHERE id = ?")
+      .bind(id)
+      .first<ContactRow>();
+    return row ? rowToContact(row) : null;
+  }
+
   async findByIgUserId(igUserId: string): Promise<Contact | null> {
     const row = await this.db
       .prepare("SELECT * FROM contacts WHERE ig_user_id = ?")
