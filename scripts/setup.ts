@@ -187,7 +187,7 @@ async function main() {
     ["META_APP_SECRET", metaAppSecret],
     ["META_ACCESS_TOKEN", metaAccessToken],
     ["ADMIN_API_KEY", adminApiKey],
-    ["WEBHOOK_VERIFY_TOKEN", webhookVerifyToken],
+    ["META_VERIFY_TOKEN", webhookVerifyToken],
   ];
 
   const secretSpinner = p.spinner();
