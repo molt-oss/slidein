@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ES2022",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "noEmit": true,
+    "types": ["@cloudflare/workers-types"],
+    "paths": {
+      "@slidein/shared": ["../../packages/shared/src"],
+      "@slidein/db": ["../../packages/db/src"],
+      "@slidein/meta-sdk": ["../../packages/meta-sdk/src"]
+    }
+  },
+  "include": ["src"]
+}

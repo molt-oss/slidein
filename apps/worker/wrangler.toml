@@ -1,0 +1,18 @@
+name = "slidein-worker"
+main = "src/index.ts"
+compatibility_date = "2024-11-01"
+compatibility_flags = ["nodejs_compat"]
+
+# D1 データベースバインディング
+[[d1_databases]]
+binding = "DB"
+database_name = "slidein-db"
+database_id = "YOUR_D1_DATABASE_ID"
+migrations_dir = "../../packages/db/migrations"
+
+[vars]
+# Meta App の環境変数（.dev.vars でオーバーライド）
+# META_APP_SECRET = ""
+# META_ACCESS_TOKEN = ""
+# META_VERIFY_TOKEN = ""
+# IG_ACCOUNT_ID = ""
