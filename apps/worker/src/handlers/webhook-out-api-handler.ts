@@ -15,7 +15,9 @@ webhookOutApi.use("/api/*", bearerAuth());
 webhookOutApi.get("/api/webhook-endpoints", async (c) => {
   const service = new WebhookService(c.env.DB);
   const endpoints = await service.listAll();
-  return c.json({ data: endpoints });
+  // secret をレスポンスから除外
+  const safe = endpoints.map(({ secret: _secret, ...rest }) => rest);
+  return c.json({ data: safe });
 });
 
 webhookOutApi.post("/api/webhook-endpoints", async (c) => {

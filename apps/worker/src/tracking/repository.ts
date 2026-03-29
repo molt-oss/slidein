@@ -27,11 +27,11 @@ function rowToLinkClick(row: LinkClickRow): LinkClick {
 
 function generateShortCode(): string {
   const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  let result = "";
-  for (let i = 0; i < 8; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return result;
+  const bytes = new Uint8Array(8);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes)
+    .map((b) => chars[b % chars.length])
+    .join("");
 }
 
 export class TrackedLinkRepository {
@@ -65,16 +65,29 @@ export class TrackedLinkRepository {
     contactTag?: string | null,
     scenarioId?: string | null,
   ): Promise<TrackedLink> {
-    const shortCode = generateShortCode();
-    const row = await this.db
-      .prepare(
-        `INSERT INTO tracked_links (original_url, short_code, contact_tag, scenario_id)
-         VALUES (?, ?, ?, ?) RETURNING *`,
-      )
-      .bind(originalUrl, shortCode, contactTag ?? null, scenarioId ?? null)
-      .first<TrackedLinkRow>();
-    if (!row) throw new Error("Failed to create tracked link");
-    return rowToTrackedLink(row);
+    const maxRetries = 3;
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      try {
+        const shortCode = generateShortCode();
+        const row = await this.db
+          .prepare(
+            `INSERT INTO tracked_links (original_url, short_code, contact_tag, scenario_id)
+             VALUES (?, ?, ?, ?) RETURNING *`,
+          )
+          .bind(originalUrl, shortCode, contactTag ?? null, scenarioId ?? null)
+          .first<TrackedLinkRow>();
+        if (!row) throw new Error("Failed to create tracked link");
+        return rowToTrackedLink(row);
+      } catch (error) {
+        // UNIQUE制約違反の場合はリトライ
+        const msg = error instanceof Error ? error.message : String(error);
+        if (attempt < maxRetries - 1 && msg.includes("UNIQUE")) {
+          continue;
+        }
+        throw error;
+      }
+    }
+    throw new Error("Failed to generate unique short code after retries");
   }
 
   async incrementClickCount(id: string): Promise<void> {

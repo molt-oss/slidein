@@ -29,6 +29,11 @@ trackingApi.get("/t/:shortCode", async (c) => {
     return c.json({ error: "Link not found" }, 404);
   }
 
+  // オープンリダイレクト防止: http/https スキームのみ許可
+  if (!/^https?:\/\//i.test(link.originalUrl)) {
+    return c.json({ error: "Invalid redirect URL" }, 400);
+  }
+
   // クリック記録（contact_idがある場合のみ）
   if (contactId) {
     try {

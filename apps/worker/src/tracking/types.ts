@@ -16,7 +16,10 @@ export const TrackedLinkSchema = z.object({
 export type TrackedLink = z.infer<typeof TrackedLinkSchema>;
 
 export const CreateTrackedLinkSchema = z.object({
-  originalUrl: z.string().url().max(2000),
+  originalUrl: z.string().url().max(2000).refine(
+    (url) => /^https?:\/\//i.test(url),
+    { message: "Only http/https URLs are allowed" },
+  ),
   contactTag: z.string().max(100).nullable().optional(),
   scenarioId: z.string().nullable().optional(),
 });

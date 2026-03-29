@@ -5,7 +5,7 @@ import { structuredLog } from "@slidein/shared";
 import { sendTextMessage, consumeToken } from "@slidein/meta-sdk";
 import { ContactRepository } from "../contacts/repository.js";
 import { FormRepository, FormResponseRepository } from "./repository.js";
-import type { Form, FormResponse, CreateFormInput } from "./types.js";
+import type { Form, FormField, FormResponse, CreateFormInput } from "./types.js";
 
 interface FormServiceDeps {
   db: D1Database;
@@ -100,6 +100,13 @@ export class FormService {
     const currentField = form.fields[active.currentFieldIndex];
     if (!currentField) return false;
 
+    // 型バリデーション
+    const validationError = this.validateAnswer(currentField, answerText);
+    if (validationError) {
+      await this.sendQuestion(contact.igUserId, validationError);
+      return true;
+    }
+
     // 回答を保存
     const responses = { ...active.responses, [currentField.key]: answerText };
     const nextIndex = active.currentFieldIndex + 1;
@@ -121,6 +128,22 @@ export class FormService {
     }
 
     return true;
+  }
+
+  /** フィールド型に応じた回答バリデーション。エラー時はメッセージ文字列を返す */
+  private validateAnswer(field: FormField, answer: string): string | null {
+    switch (field.type) {
+      case "email":
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(answer)
+          ? null
+          : "Please enter a valid email address.";
+      case "number":
+        return !Number.isNaN(Number(answer))
+          ? null
+          : "Please enter a number.";
+      default:
+        return null;
+    }
   }
 
   private async sendQuestion(

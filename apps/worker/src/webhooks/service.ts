@@ -76,26 +76,52 @@ export class WebhookService {
     }
   }
 
+  /** 送信先URLがプライベートIPでないことを検証（SSRF防止） */
+  private isUrlSafe(url: string): boolean {
+    try {
+      const parsed = new URL(url);
+      const host = parsed.hostname.toLowerCase();
+      if (host === "localhost" || host === "::1" || host === "[::1]" || host === "0.0.0.0") return false;
+      if (/^(127\.|10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|0\.|169\.254\.)/.test(host)) return false;
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   private async sendWebhook(
     endpoint: WebhookEndpoint,
     body: string,
   ): Promise<void> {
+    // 実行時 SSRF チェック（二重防御）
+    if (!this.isUrlSafe(endpoint.url)) {
+      throw new Error(`Blocked: private/internal URL ${endpoint.url}`);
+    }
+
     const signature = await this.sign(body, endpoint.secret);
 
-    const response = await fetch(endpoint.url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Signature-256": `sha256=${signature}`,
-      },
-      body,
-    });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
 
-    structuredLog("info", "Webhook delivered", {
-      endpointId: endpoint.id,
-      url: endpoint.url,
-      status: response.status,
-    });
+    try {
+      const response = await fetch(endpoint.url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Signature-256": `sha256=${signature}`,
+        },
+        body,
+        signal: controller.signal,
+      });
+
+      structuredLog("info", "Webhook delivered", {
+        endpointId: endpoint.id,
+        url: endpoint.url,
+        status: response.status,
+      });
+    } finally {
+      clearTimeout(timeout);
+    }
   }
 
   private async sign(payload: string, secret: string): Promise<string> {
