@@ -27,28 +27,28 @@ function run(cmd: string, opts?: { cwd?: string; input?: string }): string {
 }
 
 function cancelled(): never {
-  p.cancel("セットアップをキャンセルしたよ。");
+  p.cancel("Setup cancelled.");
   return process.exit(1) as never;
 }
 
 async function main() {
-  p.intro("🛝 slidein — セットアップ");
+  p.intro("🛝 slidein — setup");
 
   p.note(
     [
-      "必要なもの:",
+      "Requirements:",
       "  • Node.js ≥ 20 & pnpm",
-      "  • Cloudflare アカウント（無料プランでOK）",
-      "  • Meta Developer App（Instagram API追加済み）",
+      "  • Cloudflare account (free plan works)",
+      "  • Meta Developer App with Instagram API",
       "",
-      "聞かれるのは3つだけ！あとは全部自動だよ ✨",
+      "Only 3 questions — everything else is automatic ✨",
     ].join("\n"),
-    "はじめる前に"
+    "Before you begin"
   );
 
   // ── 1. Wrangler ログイン確認 ─────────────────────────────────────
   const loginSpinner = p.spinner();
-  loginSpinner.start("Cloudflare のログイン状態を確認中…");
+  loginSpinner.start("Checking Cloudflare authentication…");
 
   let loggedIn = false;
   try {
@@ -59,46 +59,46 @@ async function main() {
   }
 
   if (!loggedIn) {
-    loginSpinner.stop("Cloudflare 未ログイン");
-    p.log.warn("ブラウザが開くから、Cloudflare にログインしてね 🌐");
+    loginSpinner.stop("Not logged in to Cloudflare");
+    p.log.warn("Opening browser for Cloudflare login 🌐");
     try {
       execSync("npx wrangler login", { cwd: ROOT, stdio: "inherit" });
     } catch {
-      p.log.error("ログイン失敗。手動で npx wrangler login を実行してね。");
+      p.log.error("Login failed. Run 'npx wrangler login' manually.");
       process.exit(1);
     }
   } else {
-    loginSpinner.stop("Cloudflare ログイン済み ✓");
+    loginSpinner.stop("Cloudflare authenticated ✓");
   }
 
   // ── 2. Meta 認証情報（聞くのは3つだけ！） ───────────────────────
-  p.log.step("Meta の認証情報を入力してね");
+  p.log.step("Enter your Meta credentials");
 
   const metaAppSecret = await p.text({
-    message: "Meta App Secret（Meta Console → アプリ設定 → ベーシック）",
-    validate: (v) => (!v ? "必須だよ！" : undefined),
+    message: "Meta App Secret (Meta Console → App Settings → Basic)",
+    validate: (v) => (!v ? "Required" : undefined),
   });
   if (p.isCancel(metaAppSecret)) cancelled();
 
   const metaAccessToken = await p.text({
-    message: "Meta Access Token（Instagram → APIセットアップ → トークンを生成）",
-    validate: (v) => (!v ? "必須だよ！" : undefined),
+    message: "Meta Access Token (Instagram → API Setup → Generate Token)",
+    validate: (v) => (!v ? "Required" : undefined),
   });
   if (p.isCancel(metaAccessToken)) cancelled();
 
   const igAccountId = await p.text({
-    message: "Instagram アカウントID（Instagram → APIセットアップに表示されてるよ）",
-    validate: (v) => (!v ? "必須だよ！" : undefined),
+    message: "Instagram Account ID (shown in Instagram → API Setup)",
+    validate: (v) => (!v ? "Required" : undefined),
   });
   if (p.isCancel(igAccountId)) cancelled();
 
-  // 自動生成（ユーザーには聞かない）
+  // Auto-generated (no user input)
   const adminApiKey = randomUUID();
   const webhookVerifyToken = randomUUID();
 
-  p.log.info(`🔑 管理画面パスワード（自動生成）: ${adminApiKey}`);
-  p.log.info(`🔐 Webhook検証トークン（自動生成）: ${webhookVerifyToken}`);
-  p.log.warn("↑ この2つはメモしておいてね！");
+  p.log.info(`🔑 Admin API key (auto-generated): ${adminApiKey}`);
+  p.log.info(`🔐 Webhook verify token (auto-generated): ${webhookVerifyToken}`);
+  p.log.warn("↑ Save these — you'll need them!");
 
   // ── 3. D1 データベース（全自動） ────────────────────────────────
   const tomlContent = readFileSync(WRANGLER_TOML, "utf-8");
@@ -109,10 +109,10 @@ async function main() {
 
   if (hasRealId) {
     databaseId = existingId;
-    p.log.info(`既存のデータベースを使うよ: ${databaseId}`);
+    p.log.info(`Using existing database: ${databaseId}`);
   } else {
     const dbSpinner = p.spinner();
-    dbSpinner.start("D1 データベースを作成中…");
+    dbSpinner.start("Creating D1 database…");
     try {
       const output = run("npx wrangler d1 create slidein-db");
       const idMatch = output.match(/database_id\s*=\s*"([^"]+)"/);
@@ -125,10 +125,10 @@ async function main() {
         const db = dbs.find((d: { name: string }) => d.name === "slidein-db");
         databaseId = db?.uuid || db?.id || "";
       }
-      if (!databaseId) throw new Error("IDの取得に失敗");
-      dbSpinner.stop(`データベース作成完了: ${databaseId}`);
+      if (!databaseId) throw new Error("Failed to get database ID");
+      dbSpinner.stop(`Database created: ${databaseId}`);
     } catch (e: unknown) {
-      dbSpinner.stop("作成失敗");
+      dbSpinner.stop("Creation failed");
       // 既に存在する場合は list で取得
       try {
         const listOutput = run("npx wrangler d1 list --json");
@@ -136,12 +136,12 @@ async function main() {
         const db = dbs.find((d: { name: string }) => d.name === "slidein-db");
         databaseId = db?.uuid || db?.id || "";
         if (databaseId) {
-          p.log.info(`既存のデータベースを見つけたよ: ${databaseId}`);
+          p.log.info(`Found existing database: ${databaseId}`);
         } else {
           throw new Error("not found");
         }
       } catch {
-        p.log.error("データベースIDを自動取得できなかった。npx wrangler d1 list で確認してね。");
+        p.log.error("Could not get database ID. Run 'npx wrangler d1 list' to check.");
         process.exit(1);
       }
     }
@@ -160,7 +160,7 @@ async function main() {
     updatedToml = updatedToml.replace(/\[vars\]/, `[vars]\nIG_ACCOUNT_ID = "${igAccountId}"`);
   }
   writeFileSync(WRANGLER_TOML, updatedToml);
-  p.log.success("wrangler.toml 更新完了");
+  p.log.success("wrangler.toml updated");
 
   // ── 4. マイグレーション（確認なし・自動実行） ──────────────────
   const migrations = readdirSync(MIGRATIONS_DIR)
@@ -169,7 +169,7 @@ async function main() {
 
   const migSpinner = p.spinner();
   for (const file of migrations) {
-    migSpinner.start(`マイグレーション: ${file}`);
+    migSpinner.start(`Migration: ${file}`);
     try {
       run(
         `npx wrangler d1 execute slidein-db --remote --file=${MIGRATIONS_DIR}/${file}`,
@@ -177,10 +177,10 @@ async function main() {
       );
       migSpinner.stop(`✓ ${file}`);
     } catch {
-      migSpinner.stop(`✓ ${file}（適用済み）`);
+      migSpinner.stop(`✓ ${file} (already applied)`);
     }
   }
-  p.log.success(`${migrations.length}個のマイグレーション完了`);
+  p.log.success(`${migrations.length} migrations applied`);
 
   // ── 5. シークレット設定 ─────────────────────────────────────────
   const secrets: [string, string][] = [
@@ -192,7 +192,7 @@ async function main() {
 
   const secretSpinner = p.spinner();
   for (const [name, value] of secrets) {
-    secretSpinner.start(`シークレット設定: ${name}`);
+    secretSpinner.start(`Setting secret: ${name}`);
     try {
       // echo パイプ方式（Windows/Mac両対応）
       const isWindows = process.platform === "win32";
@@ -208,7 +208,7 @@ async function main() {
         secretSpinner.stop(`✓ ${name}`);
       } catch {
         secretSpinner.stop(`✗ ${name}`);
-        p.log.error(`${name} の設定に失敗。手動で設定してね:`);
+        p.log.error(`Failed to set ${name}. Set it manually:`);
         p.log.info(`  cd apps/worker && npx wrangler secret put ${name}`);
       }
     }
@@ -216,38 +216,38 @@ async function main() {
 
   // ── 6. デプロイ ─────────────────────────────────────────────────
   const deploySpinner = p.spinner();
-  deploySpinner.start("Worker をデプロイ中…");
+  deploySpinner.start("Deploying worker…");
 
   let workerUrl = "https://<your-worker>.workers.dev";
   try {
     const output = run("npx wrangler deploy", { cwd: WORKER_DIR });
     const urlMatch = output.match(/https:\/\/[^\s]+\.workers\.dev/);
     if (urlMatch) workerUrl = urlMatch[0];
-    deploySpinner.stop("Worker デプロイ完了 ✓");
+    deploySpinner.stop("Worker deployed ✓");
   } catch (e: unknown) {
-    deploySpinner.stop("デプロイ失敗");
+    deploySpinner.stop("Deploy failed");
     const err = e as { message?: string };
     p.log.error(err.message ?? "Unknown error");
-    p.log.info("手動でデプロイ: cd apps/worker && npx wrangler deploy");
+    p.log.info("Deploy manually: cd apps/worker && npx wrangler deploy");
   }
 
   // ── 7. 完了 ─────────────────────────────────────────────────────
   p.note(
     [
-      `Worker URL:         ${workerUrl}`,
-      `管理画面パスワード: ${adminApiKey}`,
-      `Webhook検証トークン: ${webhookVerifyToken}`,
+      `Worker URL:          ${workerUrl}`,
+      `Admin API key:       ${adminApiKey}`,
+      `Webhook verify token: ${webhookVerifyToken}`,
       "",
-      "次にやること:",
-      `  1. Meta Developer Console → Webhook設定`,
-      `  2. コールバックURL: ${workerUrl}/webhook`,
-      `  3. 検証トークン:    ${webhookVerifyToken}`,
-      `  4. サブスクライブ:  messages, messaging_postbacks, comments`,
+      "Next steps:",
+      `  1. Go to Meta Developer Console → Webhooks`,
+      `  2. Callback URL:  ${workerUrl}/webhook`,
+      `  3. Verify token:  ${webhookVerifyToken}`,
+      `  4. Subscribe to:  messages, messaging_postbacks, comments`,
       "",
-      "管理画面を起動:",
+      "Start dashboard:",
       "  cd apps/web && pnpm dev",
     ].join("\n"),
-    "🎉 セットアップ完了！"
+    "🎉 Setup complete!"
   );
 
   p.outro("Happy automating! 🛝");
