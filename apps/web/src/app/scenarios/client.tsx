@@ -7,6 +7,7 @@ import { DataTable } from "@/components/data-table";
 import { Badge } from "@/components/badge";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { createScenario, deleteScenario, type Scenario } from "@/lib/api";
+import { useToast } from "@/components/toast";
 
 export function ScenariosClient({
   initialScenarios,
@@ -14,6 +15,7 @@ export function ScenariosClient({
   initialScenarios: Scenario[];
 }) {
   const router = useRouter();
+  const { showToast } = useToast();
   const [showForm, setShowForm] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -38,8 +40,9 @@ export function ScenariosClient({
       });
       setShowForm(false);
       router.refresh();
+      showToast("Scenario created", "success");
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to create");
+      showToast(err instanceof Error ? err.message : "Failed to create");
     } finally {
       setLoading(false);
     }
@@ -51,8 +54,9 @@ export function ScenariosClient({
       await deleteScenario(deleteTarget);
       setDeleteTarget(null);
       router.refresh();
+      showToast("Scenario deleted", "success");
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to delete");
+      showToast(err instanceof Error ? err.message : "Failed to delete");
     }
   };
 
@@ -126,39 +130,59 @@ export function ScenariosClient({
           className="mt-4 rounded-lg border border-zinc-800 bg-zinc-900 p-4 space-y-3"
         >
           <div className="grid gap-3 sm:grid-cols-2">
-            <input
-              name="name"
-              placeholder="Scenario name"
-              required
-              className="rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-500"
-            />
-            <select
-              name="triggerType"
-              defaultValue="keyword"
-              className="rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100"
-            >
-              <option value="keyword">Keyword</option>
-              <option value="comment">Comment</option>
-              <option value="api">API</option>
-            </select>
+            <div>
+              <label htmlFor="sc-name" className="mb-1 block text-xs text-zinc-400">Scenario Name</label>
+              <input
+                id="sc-name"
+                name="name"
+                placeholder="Scenario name"
+                required
+                className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-500"
+              />
+            </div>
+            <div>
+              <label htmlFor="sc-triggerType" className="mb-1 block text-xs text-zinc-400">Trigger Type</label>
+              <select
+                id="sc-triggerType"
+                name="triggerType"
+                defaultValue="keyword"
+                className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100"
+              >
+                <option value="keyword">Keyword</option>
+                <option value="comment">Comment</option>
+                <option value="api">API</option>
+              </select>
+            </div>
           </div>
-          <input
-            name="triggerValue"
-            placeholder="Trigger value (optional)"
-            className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-500"
-          />
-          <input
-            name="description"
-            placeholder="Description (optional)"
-            className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-500"
-          />
-          <textarea
-            name="firstMessage"
-            placeholder="First step message"
-            required
-            rows={3}
-            className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-500"
-          />
+          <div>
+            <label htmlFor="sc-triggerValue" className="mb-1 block text-xs text-zinc-400">Trigger Value</label>
+            <input
+              id="sc-triggerValue"
+              name="triggerValue"
+              placeholder="Trigger value (optional)"
+              className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-500"
+            />
+          </div>
+          <div>
+            <label htmlFor="sc-description" className="mb-1 block text-xs text-zinc-400">Description</label>
+            <input
+              id="sc-description"
+              name="description"
+              placeholder="Description (optional)"
+              className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-500"
+            />
+          </div>
+          <div>
+            <label htmlFor="sc-firstMessage" className="mb-1 block text-xs text-zinc-400">First Step Message</label>
+            <textarea
+              id="sc-firstMessage"
+              name="firstMessage"
+              placeholder="First step message"
+              required
+              rows={3}
+              className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-500"
+            />
+          </div>
           <button
             type="submit"
             disabled={loading}

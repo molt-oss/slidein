@@ -2,8 +2,15 @@
  * API Client — Worker API との通信を集約
  */
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8787";
-const API_KEY = process.env.NEXT_PUBLIC_API_KEY ?? "";
+/**
+ * Server-side: proxy via API_URL with API_KEY (Route Handlers use these)
+ * Client-side: proxy via /api/proxy (no API key exposed)
+ */
+const isServer = typeof window === "undefined";
+const API_BASE = isServer
+  ? (process.env.API_URL ?? "http://localhost:8787")
+  : "";
+const API_KEY = isServer ? (process.env.API_KEY ?? "") : "";
 
 class ApiError extends Error {
   constructor(
@@ -19,14 +26,20 @@ async function request<T>(
   path: string,
   options: RequestInit = {},
 ): Promise<T> {
-  const url = `${API_URL}${path}`;
+  // Server: direct call with auth; Client: proxy route (no auth header needed)
+  const url = isServer
+    ? `${API_BASE}${path}`
+    : `/api/proxy${path.replace(/^\/api/, "")}`;
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...options.headers as Record<string, string>,
+  };
+  if (isServer && API_KEY) {
+    headers["Authorization"] = `Bearer ${API_KEY}`;
+  }
   const res = await fetch(url, {
     ...options,
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${API_KEY}`,
-      ...options.headers,
-    },
+    headers,
   });
 
   if (!res.ok) {

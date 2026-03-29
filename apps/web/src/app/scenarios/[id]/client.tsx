@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/badge";
 import { updateScenario, type ScenarioWithSteps } from "@/lib/api";
+import { useToast } from "@/components/toast";
 
 interface StepInput {
   stepOrder: number;
@@ -25,6 +26,7 @@ export function ScenarioDetailClient({
   scenario: ScenarioWithSteps;
 }) {
   const router = useRouter();
+  const { showToast } = useToast();
   const [steps, setSteps] = useState<StepInput[]>(
     scenario.steps
       .sort((a, b) => a.stepOrder - b.stepOrder)
@@ -77,8 +79,9 @@ export function ScenarioDetailClient({
     try {
       await updateScenario(scenario.id, { name, enabled, steps });
       router.refresh();
+      showToast("Scenario saved", "success");
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to save");
+      showToast(err instanceof Error ? err.message : "Failed to save");
     } finally {
       setSaving(false);
     }
@@ -102,6 +105,7 @@ export function ScenarioDetailClient({
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
+            aria-label="Scenario name"
             className="flex-1 rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100"
           />
           <button
@@ -159,6 +163,7 @@ export function ScenarioDetailClient({
                 value={step.messageText}
                 onChange={(e) => updateStep(i, "messageText", e.target.value)}
                 rows={2}
+                aria-label={`Step ${step.stepOrder} message text`}
                 className="mt-2 w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100"
                 placeholder="Message text"
               />
@@ -172,6 +177,7 @@ export function ScenarioDetailClient({
                   onChange={(e) =>
                     updateStep(i, "delaySeconds", Number(e.target.value))
                   }
+                  aria-label={`Step ${step.stepOrder} delay seconds`}
                   className="w-24 rounded-md border border-zinc-700 bg-zinc-800 px-2 py-1 text-sm text-zinc-100"
                 />
                 <span className="text-xs text-zinc-500">
@@ -191,6 +197,7 @@ export function ScenarioDetailClient({
                     )
                   }
                   placeholder="Optional"
+                  aria-label={`Step ${step.stepOrder} condition tag`}
                   className="w-32 rounded-md border border-zinc-700 bg-zinc-800 px-2 py-1 text-sm text-zinc-100 placeholder-zinc-600"
                 />
               </div>

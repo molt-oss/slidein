@@ -98,6 +98,7 @@ export function ContactsClient({
           placeholder="Search by name or username..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
+          aria-label="Search contacts"
           className="rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-500"
         />
 
@@ -105,6 +106,7 @@ export function ContactsClient({
           <select
             value={tagFilter}
             onChange={(e) => setTagFilter(e.target.value)}
+            aria-label="Filter by tag"
             className="rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100"
           >
             <option value="">All Tags</option>

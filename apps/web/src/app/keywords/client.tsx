@@ -10,6 +10,7 @@ import {
   deleteKeywordRule,
   type KeywordRule,
 } from "@/lib/api";
+import { useToast } from "@/components/toast";
 
 export function KeywordRulesClient({
   initialRules,
@@ -17,6 +18,7 @@ export function KeywordRulesClient({
   initialRules: KeywordRule[];
 }) {
   const router = useRouter();
+  const { showToast } = useToast();
   const [showForm, setShowForm] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -33,8 +35,9 @@ export function KeywordRulesClient({
       });
       setShowForm(false);
       router.refresh();
+      showToast("Keyword rule created", "success");
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to create");
+      showToast(err instanceof Error ? err.message : "Failed to create");
     } finally {
       setLoading(false);
     }
@@ -46,8 +49,9 @@ export function KeywordRulesClient({
       await deleteKeywordRule(deleteTarget);
       setDeleteTarget(null);
       router.refresh();
+      showToast("Keyword rule deleted", "success");
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to delete");
+      showToast(err instanceof Error ? err.message : "Failed to delete");
     }
   };
 
@@ -112,27 +116,39 @@ export function KeywordRulesClient({
           className="mt-4 rounded-lg border border-zinc-800 bg-zinc-900 p-4 space-y-3"
         >
           <div className="grid gap-3 sm:grid-cols-3">
-            <input
-              name="keyword"
-              placeholder="Keyword"
-              required
-              className="rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-500"
-            />
-            <select
-              name="matchType"
-              defaultValue="contains"
-              className="rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100"
-            >
-              <option value="exact">Exact</option>
-              <option value="contains">Contains</option>
-              <option value="regex">Regex</option>
-            </select>
-            <input
-              name="responseText"
-              placeholder="Response text"
-              required
-              className="rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-500"
-            />
+            <div>
+              <label htmlFor="kw-keyword" className="mb-1 block text-xs text-zinc-400">Keyword</label>
+              <input
+                id="kw-keyword"
+                name="keyword"
+                placeholder="Keyword"
+                required
+                className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-500"
+              />
+            </div>
+            <div>
+              <label htmlFor="kw-matchType" className="mb-1 block text-xs text-zinc-400">Match Type</label>
+              <select
+                id="kw-matchType"
+                name="matchType"
+                defaultValue="contains"
+                className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100"
+              >
+                <option value="exact">Exact</option>
+                <option value="contains">Contains</option>
+                <option value="regex">Regex</option>
+              </select>
+            </div>
+            <div>
+              <label htmlFor="kw-responseText" className="mb-1 block text-xs text-zinc-400">Response Text</label>
+              <input
+                id="kw-responseText"
+                name="responseText"
+                placeholder="Response text"
+                required
+                className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-500"
+              />
+            </div>
           </div>
           <button
             type="submit"

@@ -10,6 +10,7 @@ import {
   deleteCommentTrigger,
   type CommentTrigger,
 } from "@/lib/api";
+import { useToast } from "@/components/toast";
 
 export function TriggersClient({
   initialTriggers,
@@ -17,6 +18,7 @@ export function TriggersClient({
   initialTriggers: CommentTrigger[];
 }) {
   const router = useRouter();
+  const { showToast } = useToast();
   const [showForm, setShowForm] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -33,8 +35,9 @@ export function TriggersClient({
       });
       setShowForm(false);
       router.refresh();
+      showToast("Comment trigger created", "success");
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to create");
+      showToast(err instanceof Error ? err.message : "Failed to create");
     } finally {
       setLoading(false);
     }
@@ -46,8 +49,9 @@ export function TriggersClient({
       await deleteCommentTrigger(deleteTarget);
       setDeleteTarget(null);
       router.refresh();
+      showToast("Comment trigger deleted", "success");
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to delete");
+      showToast(err instanceof Error ? err.message : "Failed to delete");
     }
   };
 
@@ -122,22 +126,34 @@ export function TriggersClient({
           className="mt-4 rounded-lg border border-zinc-800 bg-zinc-900 p-4 space-y-3"
         >
           <div className="grid gap-3 sm:grid-cols-3">
-            <input
-              name="dmResponseText"
-              placeholder="DM response text"
-              required
-              className="rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-500"
-            />
-            <input
-              name="keywordFilter"
-              placeholder="Keyword filter (optional)"
-              className="rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-500"
-            />
-            <input
-              name="mediaIdFilter"
-              placeholder="Media ID filter (optional)"
-              className="rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-500"
-            />
+            <div>
+              <label htmlFor="tr-dmResponseText" className="mb-1 block text-xs text-zinc-400">DM Response Text</label>
+              <input
+                id="tr-dmResponseText"
+                name="dmResponseText"
+                placeholder="DM response text"
+                required
+                className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-500"
+              />
+            </div>
+            <div>
+              <label htmlFor="tr-keywordFilter" className="mb-1 block text-xs text-zinc-400">Keyword Filter</label>
+              <input
+                id="tr-keywordFilter"
+                name="keywordFilter"
+                placeholder="Keyword filter (optional)"
+                className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-500"
+              />
+            </div>
+            <div>
+              <label htmlFor="tr-mediaIdFilter" className="mb-1 block text-xs text-zinc-400">Media ID Filter</label>
+              <input
+                id="tr-mediaIdFilter"
+                name="mediaIdFilter"
+                placeholder="Media ID filter (optional)"
+                className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-500"
+              />
+            </div>
           </div>
           <button
             type="submit"

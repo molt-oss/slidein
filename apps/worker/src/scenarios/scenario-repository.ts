@@ -33,15 +33,42 @@ export class ScenarioRepository {
   constructor(private readonly db: D1Database) {}
 
   async findAll(): Promise<ScenarioWithSteps[]> {
-    const scenarios = await this.db
-      .prepare("SELECT * FROM scenarios ORDER BY created_at DESC")
-      .all<ScenarioRow>();
-    const result: ScenarioWithSteps[] = [];
-    for (const row of scenarios.results) {
-      const steps = await this.findStepsByScenarioId(row.id);
-      result.push({ ...rowToScenario(row), steps });
+    // JOIN query to avoid N+1
+    const rows = await this.db
+      .prepare(
+        `SELECT s.*, st.id as step_id, st.step_order, st.message_text,
+                st.delay_seconds, st.condition_tag, st.created_at as step_created_at
+         FROM scenarios s
+         LEFT JOIN scenario_steps st ON s.id = st.scenario_id
+         ORDER BY s.created_at DESC, st.step_order ASC`,
+      )
+      .all<ScenarioRow & {
+        step_id: string | null;
+        step_order: number | null;
+        message_text: string | null;
+        delay_seconds: number | null;
+        condition_tag: string | null;
+        step_created_at: string | null;
+      }>();
+
+    const scenarioMap = new Map<string, ScenarioWithSteps>();
+    for (const row of rows.results) {
+      if (!scenarioMap.has(row.id)) {
+        scenarioMap.set(row.id, { ...rowToScenario(row), steps: [] });
+      }
+      if (row.step_id) {
+        scenarioMap.get(row.id)!.steps.push({
+          id: row.step_id,
+          scenarioId: row.id,
+          stepOrder: row.step_order!,
+          messageText: row.message_text!,
+          delaySeconds: row.delay_seconds!,
+          conditionTag: row.condition_tag,
+          createdAt: row.step_created_at!,
+        });
+      }
     }
-    return result;
+    return [...scenarioMap.values()];
   }
 
   async findById(id: string): Promise<ScenarioWithSteps | null> {

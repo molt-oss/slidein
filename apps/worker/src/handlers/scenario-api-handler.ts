@@ -10,27 +10,12 @@ import {
   UpdateScenarioSchema,
   EnrollContactSchema,
 } from "../scenarios/types.js";
+import { bearerAuth } from "../middleware/auth.js";
 
 const scenarioApi = new Hono<{ Bindings: Env }>();
 
-// --- Bearer Token 認証ミドルウェア ---
-
-scenarioApi.use("/api/*", async (c, next) => {
-  const authHeader = c.req.header("Authorization");
-  const expectedToken = c.env.ADMIN_API_KEY;
-
-  if (!expectedToken) {
-    structuredLog("error", "ADMIN_API_KEY is not configured");
-    return c.json({ error: "Server misconfigured" }, 500);
-  }
-
-  if (!authHeader || authHeader !== `Bearer ${expectedToken}`) {
-    structuredLog("warn", "Unauthorized API request", { path: c.req.path });
-    return c.json({ error: "Unauthorized" }, 401);
-  }
-
-  await next();
-});
+// --- Bearer Token 認証ミドルウェア (timing-safe) ---
+scenarioApi.use("/api/*", bearerAuth());
 
 function createService(env: Env): ScenarioService {
   return new ScenarioService({

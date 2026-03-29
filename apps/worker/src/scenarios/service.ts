@@ -86,6 +86,13 @@ export class ScenarioService {
   }
 
   async delete(id: string): Promise<boolean> {
+    // Manual cascade: cancel active enrollments before deletion (D1 has no FK cascade guarantee)
+    const enrollments = await this.enrollmentRepo.findByScenarioId(id);
+    for (const e of enrollments) {
+      if (e.status === "active") {
+        await this.enrollmentRepo.cancel(e.id);
+      }
+    }
     const deleted = await this.scenarioRepo.delete(id);
     if (deleted) structuredLog("info", "Scenario deleted", { scenarioId: id });
     return deleted;
@@ -194,11 +201,30 @@ export class ScenarioService {
 
     const elapsed = Date.now() - new Date(contact.lastMessageAt).getTime();
     if (elapsed > TWENTY_FOUR_HOURS_MS) {
+      // Increment retry count and fail after 3 attempts to prevent infinite retry
+      const retryCount = (enrollment as ScenarioEnrollment & { retryCount?: number }).retryCount ?? 0;
+      if (retryCount >= 3) {
+        structuredLog("warn", "24h window expired, max retries reached — cancelling", {
+          enrollmentId: enrollment.id,
+          contactId: enrollment.contactId,
+          retryCount,
+        });
+        await this.enrollmentRepo.cancel(enrollment.id);
+        return;
+      }
       structuredLog("warn", "24h window expired for scenario step", {
         enrollmentId: enrollment.id,
         contactId: enrollment.contactId,
+        retryCount: retryCount + 1,
       });
-      return; // next_send_atを更新しない → 次のCronで再チェック
+      // Delay next check by 1 hour to reduce churn
+      const nextRetry = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+      await this.enrollmentRepo.advance(
+        enrollment.id,
+        enrollment.currentStepOrder,
+        nextRetry,
+      );
+      return;
     }
 
     // レート制限
