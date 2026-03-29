@@ -17,6 +17,8 @@ import { webhookOutApi } from "./handlers/webhook-out-api-handler.js";
 import { conversionApi } from "./handlers/conversion-api-handler.js";
 import { formApi } from "./handlers/form-api-handler.js";
 import { deliverySettingsApi } from "./handlers/delivery-settings-api-handler.js";
+import { aiApi } from "./handlers/ai-api-handler.js";
+import { mcpHandler } from "./handlers/mcp-handler.js";
 import { MessageService } from "./messaging/service.js";
 import { ScenarioService } from "./scenarios/service.js";
 import { BroadcastService } from "./broadcasts/service.js";
@@ -58,6 +60,12 @@ app.route("/", formApi);
 
 // 配信時間帯設定 API ルート
 app.route("/", deliverySettingsApi);
+
+// AI設定 API ルート
+app.route("/", aiApi);
+
+// MCP エンドポイント
+app.route("/", mcpHandler);
 
 // 404 ハンドラ
 app.notFound((c) => c.json({ error: "Not found" }, 404));

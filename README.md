@@ -84,6 +84,50 @@ pnpm --filter worker deploy
 - [ ] Multi-platform support (Messenger, WhatsApp)
 - [ ] Template marketplace
 
+## 🔌 MCP (Model Context Protocol)
+
+slidein exposes an MCP endpoint that lets AI agents (Claude Code, etc.) manage all features via natural language.
+
+### Setup
+
+Add to your Claude Code MCP config (`~/.claude/mcp.json`):
+
+```json
+{
+  "mcpServers": {
+    "slidein": {
+      "type": "url",
+      "url": "https://your-worker.your-subdomain.workers.dev/mcp",
+      "headers": {
+        "Authorization": "Bearer YOUR_ADMIN_API_KEY"
+      }
+    }
+  }
+}
+```
+
+### Available Tools
+
+| Tool | Description |
+|---|---|
+| `contacts_list` / `contacts_get` | Contact management |
+| `keyword_rules_list` / `_create` / `_delete` | Keyword auto-reply |
+| `comment_triggers_list` / `_create` / `_delete` | Comment → DM triggers |
+| `scenarios_list` / `_create` / `_delete` | Step DM scenarios |
+| `broadcasts_list` / `_create` / `_send` | Broadcast messages |
+| `scoring_rules_list` / `_create` | Lead scoring |
+| `automations_list` / `_create` | IF-THEN automation |
+| `tracked_links_list` / `_create` | URL tracking |
+| `forms_list` / `_create` | DM forms |
+| `ai_config_get` / `_update` | AI auto-reply config |
+
+### Example
+
+```
+You: "Create a keyword rule that replies 'Check your DMs!' when someone says 'price'"
+Claude: → calls keyword_rules_create({ keyword: "price", matchType: "contains", responseText: "Check your DMs!" })
+```
+
 ## 📄 License
 
 MIT © [molt-oss](https://github.com/molt-oss)

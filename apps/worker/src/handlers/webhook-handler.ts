@@ -76,6 +76,7 @@ async function processWebhookPayload(
     db: env.DB,
     accessToken: env.META_ACCESS_TOKEN,
     igAccountId: env.IG_ACCOUNT_ID,
+    aiApiKey: env.AI_API_KEY,
   });
 
   const commentTriggerService = new CommentTriggerService(env.DB);

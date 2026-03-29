@@ -185,3 +185,15 @@ export interface FormResponseRow {
   completed_at: string | null;
   created_at: string;
 }
+
+export interface AIConfigRow {
+  id: string;
+  enabled: number; // 0 or 1
+  provider: "anthropic" | "openai";
+  api_key_encrypted: string | null;
+  model: string;
+  system_prompt: string | null;
+  knowledge_base: string | null;
+  max_tokens: number;
+  created_at: string;
+}

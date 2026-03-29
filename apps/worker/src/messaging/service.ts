@@ -9,6 +9,7 @@ import { KeywordMatchService } from "../triggers/keyword-match-service.js";
 import { ScenarioTriggerService } from "../triggers/scenario-trigger-service.js";
 import { ScoringService } from "../scoring/service.js";
 import { AutomationService } from "../automations/service.js";
+import { AIService } from "../ai/service.js";
 import { MessageRepository } from "./repository.js";
 import { PendingMessageRepository } from "./pending-message-repository.js";
 import { resolveTemplate, hasTemplateVars } from "./template-engine.js";
@@ -20,6 +21,7 @@ interface MessageServiceDeps {
   db: D1Database;
   accessToken: string;
   igAccountId: string;
+  aiApiKey?: string;
 }
 
 export class MessageService {
@@ -30,6 +32,7 @@ export class MessageService {
   private readonly scenarioTriggerService: ScenarioTriggerService;
   private readonly scoringService: ScoringService;
   private readonly automationService: AutomationService;
+  private readonly aiService: AIService;
   private readonly deps: MessageServiceDeps;
 
   constructor(deps: MessageServiceDeps) {
@@ -41,6 +44,7 @@ export class MessageService {
     this.scenarioTriggerService = new ScenarioTriggerService(deps);
     this.scoringService = new ScoringService(deps.db);
     this.automationService = new AutomationService(deps);
+    this.aiService = new AIService({ db: deps.db, aiApiKey: deps.aiApiKey });
   }
 
   /** 受信メッセージ処理: ログ保存 + キーワードマッチ → 自動返信 */
@@ -91,17 +95,19 @@ export class MessageService {
     }
 
     if (!matchedRule) {
+      // 7. AI自動応答フォールバック
+      await this.tryAIResponse(contact.id, senderIgId, messageText, contact);
       return;
     }
 
-    // 7. テンプレート変数の解決
+    // 8. テンプレート変数の解決
     let responseText = matchedRule.responseText;
     if (hasTemplateVars(responseText)) {
       const score = await this.scoringService.getScore(contact.id);
       responseText = resolveTemplate(responseText, { ...contact, score });
     }
 
-    // 8. DM送信（24hチェック + レート制限込み）
+    // 9. DM送信（24hチェック + レート制限込み）
     await this.sendDm(
       contact.id,
       senderIgId,
@@ -182,6 +188,26 @@ export class MessageService {
         });
       }
     }
+  }
+
+  /** AI自動応答のフォールバック（キーワード/シナリオ/フォームにマッチしなかった場合） */
+  private async tryAIResponse(
+    contactId: string,
+    senderIgId: string,
+    messageText: string,
+    contact: { lastMessageAt: string; displayName: string | null; username: string | null; tags: string[]; score: number; id: string; igUserId: string; firstSeenAt: string },
+  ): Promise<void> {
+    const config = await this.aiService.getConfig();
+    if (!config?.enabled) return;
+
+    const aiResponse = await this.aiService.generateResponse(
+      messageText, contact, config,
+    );
+    if (!aiResponse) return;
+
+    structuredLog("info", "AI response generated", { contactId });
+
+    await this.sendDm(contactId, senderIgId, aiResponse, contact.lastMessageAt);
   }
 
   /** DM送信の共通ロジック（24hチェック + レート制限 + キューイング） */

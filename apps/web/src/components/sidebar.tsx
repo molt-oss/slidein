@@ -18,6 +18,7 @@ const NAV_ITEMS = [
   { href: "/webhooks", label: "Webhooks", icon: "🪝" },
   { href: "/conversions", label: "Conversions", icon: "🎯" },
   { href: "/forms", label: "Forms", icon: "📝" },
+  { href: "/ai", label: "AI Auto-Reply", icon: "🤖" },
   { href: "/settings", label: "Settings", icon: "⚙️" },
 ];
 

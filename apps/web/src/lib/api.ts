@@ -544,4 +544,36 @@ export async function updateDeliverySettings(input: {
   });
 }
 
+// --- AI Config ---
+
+export interface AIConfig {
+  id: string;
+  enabled: boolean;
+  provider: "anthropic" | "openai";
+  apiKeyEncrypted: string | null;
+  model: string;
+  systemPrompt: string | null;
+  knowledgeBase: string | null;
+  maxTokens: number;
+  createdAt: string;
+}
+
+export async function fetchAIConfig() {
+  return request<{ data: AIConfig }>("/api/ai-config");
+}
+
+export async function updateAIConfig(input: {
+  enabled?: boolean;
+  provider?: "anthropic" | "openai";
+  model?: string;
+  systemPrompt?: string | null;
+  knowledgeBase?: string | null;
+  maxTokens?: number;
+}) {
+  return request<{ data: AIConfig }>("/api/ai-config", {
+    method: "PUT",
+    body: JSON.stringify(input),
+  });
+}
+
 export { ApiError };
