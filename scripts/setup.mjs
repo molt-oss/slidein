@@ -78,13 +78,16 @@ async function main() {
 
   const metaAppSecret = await ask('📋 Meta App Secret: ');
   const metaAccessToken = await ask('📋 Meta Access Token: ');
-  const metaVerifyToken = await ask('📋 Webhook検証トークン（好きな文字列でOK）: ');
   const igAccountId = await ask('📋 Instagram アカウントID: ');
 
-  // ADMIN_API_KEY は自動生成
+  // Verify Token と ADMIN_API_KEY は自動生成（ユーザーに聞かない）
+  const metaVerifyToken = randomBytes(16).toString('hex');
   const adminApiKey = randomBytes(24).toString('base64url');
-  console.log(`\n🔑 管理画面用パスワード（自動生成）: ${adminApiKey}`);
-  console.log('   ↑ この値はあとで管理画面のログインに使うからメモしてね！\n');
+
+  console.log(`\n🔑 以下は自動生成されたよ（メモしておいてね！）:`);
+  console.log(`   Webhook検証トークン: ${metaVerifyToken}`);
+  console.log(`   管理画面パスワード:  ${adminApiKey}`);
+  console.log('   ↑ Webhook検証トークンはMeta Consoleに貼る時に使うよ\n');
 
   // ────────────────────────────────────────
   // Step 3: D1 データベース作成
@@ -148,14 +151,24 @@ async function main() {
 
   for (const [key, value] of Object.entries(secrets)) {
     console.log(`  🔐 ${key} ...`);
-    const proc = spawnSync('npx', ['wrangler', 'secret', 'put', key], {
-      input: value,
-      cwd: WORKER_DIR,
-      encoding: 'utf8',
-      stdio: ['pipe', 'pipe', 'pipe'],
-    });
-    if (proc.status !== 0) {
-      console.error(`  ⚠️  ${key} の設定に失敗（あとで手動で設定できるよ）`);
+    // Windows/Mac/Linux 全対応: echo でパイプする方式
+    const isWindows = process.platform === 'win32';
+    const cmd = isWindows
+      ? `echo ${value}| npx wrangler secret put ${key}`
+      : `echo '${value}' | npx wrangler secret put ${key}`;
+    const result = run(cmd, { silent: true, ignoreError: true, cwd: WORKER_DIR });
+    if (!result && result !== '') {
+      // フォールバック: spawnSync
+      const proc = spawnSync('npx', ['wrangler', 'secret', 'put', key], {
+        input: value + '\n',
+        cwd: WORKER_DIR,
+        encoding: 'utf8',
+        stdio: ['pipe', 'pipe', 'pipe'],
+      });
+      if (proc.status !== 0) {
+        console.error(`  ⚠️  ${key} の設定に失敗。手動で設定してね:`);
+        console.error(`      cd apps/worker && npx wrangler secret put ${key}`);
+      }
     }
   }
   console.log('\n✅ シークレット設定完了！');
@@ -197,13 +210,18 @@ async function main() {
   console.log(`
   🎉 セットアップ完了！
 
-  🌍 Worker URL:  ${workerUrl}
-  🔑 管理画面キー: ${adminApiKey}
+  ╔══════════════════════════════════════════════════╗
+  ║ 🌍 Worker URL:         ${workerUrl.padEnd(27)}║
+  ║ 🔐 Webhook検証トークン: ${metaVerifyToken.padEnd(27)}║
+  ║ 🔑 管理画面パスワード:  ${adminApiKey.padEnd(27)}║
+  ╚══════════════════════════════════════════════════╝
+
+  ↑ この3つはメモしておいてね！
 
   管理画面をローカルで起動するには:
     cd apps/web
     cp .env.local.example .env.local
-    # .env.local を編集（API_URL と API_KEY を設定）
+    # .env.local の API_URL と API_KEY を設定
     pnpm dev
 
   動作テスト:
