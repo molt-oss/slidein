@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>slidein — Setup Guide</title>
+  <meta name="description" content="Open-source DM automation for Instagram. Set up slidein in 7 steps, completely free.">
+  <meta property="og:title" content="slidein — Setup Guide">
+  <meta property="og:description" content="Open-source DM automation for Instagram — $0/month. Full setup guide.">
+  <meta property="og:url" content="https://molt-oss.github.io/slidein/">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              200: '#c7d2fe',
+              300: '#a5b4fc',
+              400: '#818cf8',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+              800: '#3730a3',
+              900: '#312e81',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="bg-gray-950 text-gray-100 font-sans antialiased">
+
+  <!-- Mobile Header -->
+  <header class="lg:hidden sticky top-0 z-50 bg-gray-950/90 backdrop-blur border-b border-gray-800 px-4 py-3 flex items-center justify-between">
+    <a href="#top" class="text-xl font-bold">🛝 <span class="bg-gradient-to-r from-brand-400 to-purple-400 bg-clip-text text-transparent">slidein</span></a>
+    <button id="menu-toggle" class="p-2 rounded-lg hover:bg-gray-800 transition">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+    </button>
+  </header>
+
+  <!-- Mobile Nav Overlay -->
+  <div id="mobile-nav" class="fixed inset-0 z-40 bg-gray-950/95 backdrop-blur hidden lg:hidden overflow-y-auto pt-16 px-6 pb-8">
+    <nav id="mobile-nav-links" class="space-y-1"></nav>
+  </div>
+
+  <div class="lg:flex max-w-[90rem] mx-auto">
+    <!-- Sidebar -->
+    <aside class="hidden lg:block w-72 shrink-0">
+      <div class="sticky top-0 h-screen overflow-y-auto border-r border-gray-800 px-6 py-8">
+        <a href="#top" class="block mb-8">
+          <div class="text-2xl font-bold">🛝 <span class="bg-gradient-to-r from-brand-400 to-purple-400 bg-clip-text text-transparent">slidein</span></div>
+          <div class="text-xs text-gray-500 mt-1">Setup Guide</div>
+        </a>
+        <nav id="sidebar-nav" class="space-y-0.5">
+          <a href="#prerequisites" class="nav-link block px-3 py-2 text-sm rounded-lg border-l-2 border-transparent text-gray-400 hover:text-gray-200 hover:bg-gray-800/50 transition">Prerequisites</a>
+          <a href="#clone-install" class="nav-link block px-3 py-2 text-sm rounded-lg border-l-2 border-transparent text-gray-400 hover:text-gray-200 hover:bg-gray-800/50 transition">Step 1: Clone &amp; Install</a>
+          <a href="#cloudflare-setup" class="nav-link block px-3 py-2 text-sm rounded-lg border-l-2 border-transparent text-gray-400 hover:text-gray-200 hover:bg-gray-800/50 transition">Step 2: Cloudflare Setup</a>
+          <a href="#meta-app" class="nav-link block px-3 py-2 text-sm rounded-lg border-l-2 border-transparent text-gray-400 hover:text-gray-200 hover:bg-gray-800/50 transition">Step 3: Meta App Setup</a>
+          <a href="#deploy" class="nav-link block px-3 py-2 text-sm rounded-lg border-l-2 border-transparent text-gray-400 hover:text-gray-200 hover:bg-gray-800/50 transition">Step 4: Deploy Worker</a>
+          <a href="#webhook" class="nav-link block px-3 py-2 text-sm rounded-lg border-l-2 border-transparent text-gray-400 hover:text-gray-200 hover:bg-gray-800/50 transition">Step 5: Connect Webhook</a>
+          <a href="#dashboard" class="nav-link block px-3 py-2 text-sm rounded-lg border-l-2 border-transparent text-gray-400 hover:text-gray-200 hover:bg-gray-800/50 transition">Step 6: Dashboard</a>
+          <a href="#test" class="nav-link block px-3 py-2 text-sm rounded-lg border-l-2 border-transparent text-gray-400 hover:text-gray-200 hover:bg-gray-800/50 transition">Step 7: Test It!</a>
+          <a href="#troubleshooting" class="nav-link block px-3 py-2 text-sm rounded-lg border-l-2 border-transparent text-gray-400 hover:text-gray-200 hover:bg-gray-800/50 transition">Troubleshooting</a>
+          <a href="#whats-next" class="nav-link block px-3 py-2 text-sm rounded-lg border-l-2 border-transparent text-gray-400 hover:text-gray-200 hover:bg-gray-800/50 transition">What's Next?</a>
+        </nav>
+        <div class="mt-8 pt-6 border-t border-gray-800">
+          <a href="https://github.com/molt-oss/slidein" target="_blank" class="flex items-center gap-2 text-sm text-gray-500 hover:text-brand-400 transition">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+            GitHub
+          </a>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 min-w-0 px-6 py-12 lg:px-16 lg:py-16 max-w-4xl">
+
+      <!-- Hero -->
+      <section id="top" class="mb-16">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/10 border border-brand-500/20 text-brand-400 text-sm font-medium mb-6">
+          <span>🛝</span> Setup Guide
+        </div>
+        <h1 class="text-4xl lg:text-5xl font-extrabold mb-4">
+          Get <span class="bg-gradient-to-r from-brand-400 to-purple-400 bg-clip-text text-transparent">slidein</span> running<br>in 30 minutes
+        </h1>
+        <p class="text-lg text-gray-400 max-w-2xl mb-6">
+          Open-source DM automation for Instagram — <strong class="text-white">$0/month</strong>. Replace ManyChat with your own Cloudflare Workers setup.
+        </p>
+        <a href="https://github.com/molt-oss/slidein" target="_blank" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-brand-600 hover:bg-brand-500 text-white font-medium transition">
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+          View on GitHub
+        </a>
+      </section>
+
+      <!-- Step 0: Prerequisites -->
+      <section id="prerequisites" class="mb-16">
+        <div class="flex items-center gap-3 mb-6">
+          <span class="step-badge">0</span>
+          <h2 class="text-2xl font-bold">Prerequisites</h2>
+        </div>
+        <p class="text-gray-400 mb-6">Before you start, make sure you have the following:</p>
+        <div class="space-y-4">
+          <div class="flex items-start gap-4 p-4 rounded-xl bg-gray-900 border border-gray-800">
+            <span class="text-2xl">📸</span>
+            <div>
+              <h3 class="font-semibold mb-1">Instagram Business or Creator Account</h3>
+              <p class="text-sm text-gray-400">Personal accounts won't work with the API. Switch in Instagram Settings → Account → Switch to Professional Account → choose Business or Creator.</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-4 p-4 rounded-xl bg-gray-900 border border-gray-800">
+            <span class="text-2xl">👤</span>
+            <div>
+              <h3 class="font-semibold mb-1">Facebook Account</h3>
+              <p class="text-sm text-gray-400">Required for the Meta Developer Portal. <a href="https://www.facebook.com/" target="_blank" class="text-brand-400 hover:underline">facebook.com</a></p>
+            </div>
+          </div>
+          <div class="flex items-start gap-4 p-4 rounded-xl bg-gray-900 border border-gray-800">
+            <span class="text-2xl">☁️</span>
+            <div>
+              <h3 class="font-semibold mb-1">Cloudflare Account (free)</h3>
+              <p class="text-sm text-gray-400">Workers + D1 on the free tier is all you need. <a href="https://dash.cloudflare.com/sign-up" target="_blank" class="text-brand-400 hover:underline">Sign up →</a></p>
+            </div>
+          </div>
+          <div class="flex items-start gap-4 p-4 rounded-xl bg-gray-900 border border-gray-800">
+            <span class="text-2xl">🟢</span>
+            <div>
+              <h3 class="font-semibold mb-1">Node.js 20+ &amp; pnpm</h3>
+              <p class="text-sm text-gray-400">
+                <a href="https://nodejs.org/" target="_blank" class="text-brand-400 hover:underline">nodejs.org</a> · Install pnpm: <code class="px-1.5 py-0.5 rounded bg-gray-800 text-sm">npm install -g pnpm</code>
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Step 1: Clone & Install -->
+      <section id="clone-install" class="mb-16">
+        <div class="flex items-center gap-3 mb-6">
+          <span class="step-badge">1</span>
+          <h2 class="text-2xl font-bold">Clone &amp; Install</h2>
+        </div>
+        <div class="code-block relative rounded-xl bg-gray-900 border border-gray-800 overflow-hidden">
+          <div class="flex items-center justify-between px-4 py-2 bg-gray-800/50 border-b border-gray-800">
+            <span class="text-xs text-gray-500 font-mono">bash</span>
+            <button onclick="copyCode(this)" class="copy-btn px-2 py-1 text-xs text-gray-400 rounded hover:text-white transition">Copy</button>
+          </div>
+          <pre class="p-4 overflow-x-auto text-sm"><code class="text-gray-300">git clone https://github.com/molt-oss/slidein.git
+cd slidein
+pnpm install</code></pre>
+        </div>
+      </section>
+
+      <!-- Step 2: Cloudflare Setup -->
+      <section id="cloudflare-setup" class="mb-16">
+        <div class="flex items-center gap-3 mb-6">
+          <span class="step-badge">2</span>
+          <h2 class="text-2xl font-bold">Cloudflare Setup</h2>
+        </div>
+
+        <h3 class="text-lg font-semibold mb-3">2.1 — Login to Wrangler</h3>
+        <div class="code-block relative rounded-xl bg-gray-900 border border-gray-800 overflow-hidden mb-6">
+          <div class="flex items-center justify-between px-4 py-2 bg-gray-800/50 border-b border-gray-800">
+            <span class="text-xs text-gray-500 font-mono">bash</span>
+            <button onclick="copyCode(this)" class="copy-btn px-2 py-1 text-xs text-gray-400 rounded hover:text-white transition">Copy</button>
+          </div>
+          <pre class="p-4 overflow-x-auto text-sm"><code class="text-gray-300">npx wrangler login</code></pre>
+        </div>
+
+        <h3 class="text-lg font-semibold mb-3">2.2 — Create D1 Database</h3>
+        <div class="code-block relative rounded-xl bg-gray-900 border border-gray-800 overflow-hidden mb-4">
+          <div class="flex items-center justify-between px-4 py-2 bg-gray-800/50 border-b border-gray-800">
+            <span class="text-xs text-gray-500 font-mono">bash</span>
+            <button onclick="copyCode(this)" class="copy-btn px-2 py-1 text-xs text-gray-400 rounded hover:text-white transition">Copy</button>
+          </div>
+          <pre class="p-4 overflow-x-auto text-sm"><code class="text-gray-300">npx wrangler d1 create slidein-db</code></pre>
+        </div>
+        <div class="p-4 rounded-xl bg-brand-500/5 border border-brand-500/20 mb-6">
+          <p class="text-sm text-gray-300">📋 Copy the <code class="px-1.5 py-0.5 rounded bg-gray-800 text-brand-400">database_id</code> from the output, then paste it into <code class="px-1.5 py-0.5 rounded bg-gray-800 text-brand-400">apps/worker/wrangler.toml</code>:</p>
+          <pre class="mt-2 text-sm text-gray-400 font-mono">database_id = "YOUR_D1_DATABASE_ID"  ← replace this</pre>
+        </div>
+
+        <h3 class="text-lg font-semibold mb-3">2.3 — Run Migrations</h3>
+        <p class="text-gray-400 text-sm mb-3">Run all 6 migrations in order to set up the database schema:</p>
+        <div class="code-block relative rounded-xl bg-gray-900 border border-gray-800 overflow-hidden mb-4">
+          <div class="flex items-center justify-between px-4 py-2 bg-gray-800/50 border-b border-gray-800">
+            <span class="text-xs text-gray-500 font-mono">bash</span>
+            <button onclick="copyCode(this)" class="copy-btn px-2 py-1 text-xs text-gray-400 rounded hover:text-white transition">Copy</button>
+          </div>
+          <pre class="p-4 overflow-x-auto text-sm"><code class="text-gray-300">npx wrangler d1 execute slidein-db --remote --file=packages/db/migrations/0001_initial_schema.sql
+npx wrangler d1 execute slidein-db --remote --file=packages/db/migrations/0002_pending_messages.sql
+npx wrangler d1 execute slidein-db --remote --file=packages/db/migrations/0003_scenarios.sql
+npx wrangler d1 execute slidein-db --remote --file=packages/db/migrations/0004_phase3_batch1.sql
+npx wrangler d1 execute slidein-db --remote --file=packages/db/migrations/0005_phase3_batch2.sql
+npx wrangler d1 execute slidein-db --remote --file=packages/db/migrations/0006_phase3_batch3.sql</code></pre>
+        </div>
+      </section>
+
+      <!-- Step 3: Meta App Setup -->
+      <section id="meta-app" class="mb-16">
+        <div class="flex items-center gap-3 mb-6">
+          <span class="step-badge">3</span>
+          <h2 class="text-2xl font-bold">Meta App Setup</h2>
+        </div>
+
+        <div class="space-y-6">
+          <div>
+            <h3 class="text-lg font-semibold mb-2">3.1 — Register as a Developer</h3>
+            <p class="text-gray-400 text-sm">Go to <a href="https://developers.facebook.com/" target="_blank" class="text-brand-400 hover:underline">developers.facebook.com</a> and register your Facebook account as a developer if you haven't already.</p>
+          </div>
+
+          <div>
+            <h3 class="text-lg font-semibold mb-2">3.2 — Create a New App</h3>
+            <ol class="list-decimal list-inside space-y-2 text-sm text-gray-400">
+              <li>Click <strong class="text-white">Create App</strong></li>
+              <li>Use case → select <strong class="text-white">"Other"</strong></li>
+              <li>App type → select <strong class="text-white">"Business"</strong></li>
+              <li>Fill in app name (e.g., <code class="px-1.5 py-0.5 rounded bg-gray-800">slidein-myapp</code>) and contact email</li>
+              <li>Click <strong class="text-white">Create App</strong></li>
+            </ol>
+          </div>
+
+          <div>
+            <h3 class="text-lg font-semibold mb-2">3.3 — Add Instagram API</h3>
+            <p class="text-gray-400 text-sm">In your app dashboard, find <strong class="text-white">Instagram</strong> under "Add Products" and click <strong class="text-white">Set Up</strong>.</p>
+          </div>
+
+          <div>
+            <h3 class="text-lg font-semibold mb-2">3.4 — Add Instagram Tester</h3>
+            <ol class="list-decimal list-inside space-y-2 text-sm text-gray-400">
+              <li>Go to <strong class="text-white">App Roles → Roles</strong> in the left sidebar</li>
+              <li>Under <strong class="text-white">Instagram Testers</strong>, click <strong class="text-white">Add Instagram Testers</strong></li>
+              <li>Enter your Instagram username</li>
+              <li>On your phone, open Instagram → Settings → Website Permissions → Tester Invitations → <strong class="text-white">Accept</strong></li>
+            </ol>
+          </div>
+
+          <div>
+            <h3 class="text-lg font-semibold mb-2">3.5 — Get Your Credentials</h3>
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm rounded-xl overflow-hidden">
+                <thead>
+                  <tr class="bg-gray-800">
+                    <th class="text-left px-4 py-3 text-gray-300 font-medium">Credential</th>
+                    <th class="text-left px-4 py-3 text-gray-300 font-medium">Where to find it</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-800">
+                  <tr class="bg-gray-900">
+                    <td class="px-4 py-3"><code class="text-brand-400">App Secret</code></td>
+                    <td class="px-4 py-3 text-gray-400">App Settings → Basic → App Secret (click Show)</td>
+                  </tr>
+                  <tr class="bg-gray-900">
+                    <td class="px-4 py-3"><code class="text-brand-400">Access Token</code></td>
+                    <td class="px-4 py-3 text-gray-400">Instagram → API Setup → Generate Token (select your IG account)</td>
+                  </tr>
+                  <tr class="bg-gray-900">
+                    <td class="px-4 py-3"><code class="text-brand-400">Instagram Account ID</code></td>
+                    <td class="px-4 py-3 text-gray-400">Instagram → API Setup → shown as "Instagram Account ID"</td>
+                  </tr>
+                  <tr class="bg-gray-900">
+                    <td class="px-4 py-3"><code class="text-brand-400">Verify Token</code></td>
+                    <td class="px-4 py-3 text-gray-400">Choose any random string (e.g., <code class="px-1 py-0.5 rounded bg-gray-800">my-slidein-verify-2024</code>)</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Step 4: Deploy Worker -->
+      <section id="deploy" class="mb-16">
+        <div class="flex items-center gap-3 mb-6">
+          <span class="step-badge">4</span>
+          <h2 class="text-2xl font-bold">Deploy Worker</h2>
+        </div>
+
+        <h3 class="text-lg font-semibold mb-3">4.1 — Set Secrets</h3>
+        <p class="text-gray-400 text-sm mb-3">Run each command and paste the corresponding value when prompted:</p>
+        <div class="code-block relative rounded-xl bg-gray-900 border border-gray-800 overflow-hidden mb-6">
+          <div class="flex items-center justify-between px-4 py-2 bg-gray-800/50 border-b border-gray-800">
+            <span class="text-xs text-gray-500 font-mono">bash</span>
+            <button onclick="copyCode(this)" class="copy-btn px-2 py-1 text-xs text-gray-400 rounded hover:text-white transition">Copy</button>
+          </div>
+          <pre class="p-4 overflow-x-auto text-sm"><code class="text-gray-300">npx wrangler secret put META_APP_SECRET
+npx wrangler secret put META_ACCESS_TOKEN
+npx wrangler secret put META_VERIFY_TOKEN
+npx wrangler secret put ADMIN_API_KEY
+npx wrangler secret put IG_ACCOUNT_ID</code></pre>
+        </div>
+        <div class="p-4 rounded-xl bg-yellow-500/5 border border-yellow-500/20 mb-6">
+          <p class="text-sm text-gray-300">💡 <strong>ADMIN_API_KEY</strong> is for the dashboard to talk to your worker. Generate a random string, e.g.: <code class="px-1.5 py-0.5 rounded bg-gray-800 text-yellow-400">openssl rand -hex 32</code></p>
+        </div>
+
+        <h3 class="text-lg font-semibold mb-3">4.2 — Deploy</h3>
+        <div class="code-block relative rounded-xl bg-gray-900 border border-gray-800 overflow-hidden mb-4">
+          <div class="flex items-center justify-between px-4 py-2 bg-gray-800/50 border-b border-gray-800">
+            <span class="text-xs text-gray-500 font-mono">bash</span>
+            <button onclick="copyCode(this)" class="copy-btn px-2 py-1 text-xs text-gray-400 rounded hover:text-white transition">Copy</button>
+          </div>
+          <pre class="p-4 overflow-x-auto text-sm"><code class="text-gray-300">npx wrangler deploy --config apps/worker/wrangler.toml</code></pre>
+        </div>
+        <div class="p-4 rounded-xl bg-brand-500/5 border border-brand-500/20">
+          <p class="text-sm text-gray-300">📋 Note the output URL — something like:<br><code class="px-1.5 py-0.5 rounded bg-gray-800 text-brand-400">https://slidein-worker.YOUR_SUBDOMAIN.workers.dev</code><br>You'll need this in the next step.</p>
+        </div>
+      </section>
+
+      <!-- Step 5: Connect Webhook -->
+      <section id="webhook" class="mb-16">
+        <div class="flex items-center gap-3 mb-6">
+          <span class="step-badge">5</span>
+          <h2 class="text-2xl font-bold">Connect Webhook</h2>
+        </div>
+
+        <ol class="list-decimal list-inside space-y-4 text-gray-300">
+          <li>
+            Go to your Meta app → <strong class="text-white">Webhooks</strong> in the left sidebar
+          </li>
+          <li>
+            Select <strong class="text-white">Instagram</strong> from the dropdown
+          </li>
+          <li>
+            Click <strong class="text-white">Subscribe to this object</strong> (or Edit if already set up)
+          </li>
+          <li>
+            <p>Fill in:</p>
+            <div class="ml-6 mt-2 space-y-2">
+              <div class="flex items-center gap-2 text-sm">
+                <span class="text-gray-500 w-32 shrink-0">Callback URL:</span>
+                <code class="px-2 py-1 rounded bg-gray-800 text-brand-400">https://slidein-worker.YOUR_SUBDOMAIN.workers.dev/webhook</code>
+              </div>
+              <div class="flex items-center gap-2 text-sm">
+                <span class="text-gray-500 w-32 shrink-0">Verify Token:</span>
+                <code class="px-2 py-1 rounded bg-gray-800 text-brand-400">your META_VERIFY_TOKEN value</code>
+              </div>
+            </div>
+          </li>
+          <li>
+            Click <strong class="text-white">Verify and Save</strong>
+          </li>
+          <li>
+            Subscribe to these fields:
+            <div class="flex flex-wrap gap-2 mt-2 ml-6">
+              <span class="px-3 py-1 rounded-full bg-brand-500/10 border border-brand-500/20 text-brand-400 text-sm">messages</span>
+              <span class="px-3 py-1 rounded-full bg-brand-500/10 border border-brand-500/20 text-brand-400 text-sm">messaging_postbacks</span>
+              <span class="px-3 py-1 rounded-full bg-brand-500/10 border border-brand-500/20 text-brand-400 text-sm">comments</span>
+            </div>
+          </li>
+        </ol>
+      </section>
+
+      <!-- Step 6: Dashboard -->
+      <section id="dashboard" class="mb-16">
+        <div class="flex items-center gap-3 mb-6">
+          <span class="step-badge">6</span>
+          <h2 class="text-2xl font-bold">Dashboard</h2>
+        </div>
+        <p class="text-gray-400 mb-4">Set up and run the management dashboard locally:</p>
+
+        <div class="code-block relative rounded-xl bg-gray-900 border border-gray-800 overflow-hidden mb-6">
+          <div class="flex items-center justify-between px-4 py-2 bg-gray-800/50 border-b border-gray-800">
+            <span class="text-xs text-gray-500 font-mono">bash</span>
+            <button onclick="copyCode(this)" class="copy-btn px-2 py-1 text-xs text-gray-400 rounded hover:text-white transition">Copy</button>
+          </div>
+          <pre class="p-4 overflow-x-auto text-sm"><code class="text-gray-300">cd apps/web
+cp .env.local.example .env.local</code></pre>
+        </div>
+
+        <p class="text-gray-400 text-sm mb-3">Edit <code class="px-1.5 py-0.5 rounded bg-gray-800 text-brand-400">.env.local</code> with your values:</p>
+        <div class="code-block relative rounded-xl bg-gray-900 border border-gray-800 overflow-hidden mb-6">
+          <div class="flex items-center justify-between px-4 py-2 bg-gray-800/50 border-b border-gray-800">
+            <span class="text-xs text-gray-500 font-mono">.env.local</span>
+            <button onclick="copyCode(this)" class="copy-btn px-2 py-1 text-xs text-gray-400 rounded hover:text-white transition">Copy</button>
+          </div>
+          <pre class="p-4 overflow-x-auto text-sm"><code class="text-gray-300">API_URL=https://slidein-worker.YOUR_SUBDOMAIN.workers.dev
+API_KEY=your-admin-api-key-here</code></pre>
+        </div>
+
+        <p class="text-gray-400 text-sm mb-3">Then start the dev server:</p>
+        <div class="code-block relative rounded-xl bg-gray-900 border border-gray-800 overflow-hidden">
+          <div class="flex items-center justify-between px-4 py-2 bg-gray-800/50 border-b border-gray-800">
+            <span class="text-xs text-gray-500 font-mono">bash</span>
+            <button onclick="copyCode(this)" class="copy-btn px-2 py-1 text-xs text-gray-400 rounded hover:text-white transition">Copy</button>
+          </div>
+          <pre class="p-4 overflow-x-auto text-sm"><code class="text-gray-300">pnpm dev</code></pre>
+        </div>
+      </section>
+
+      <!-- Step 7: Test It! -->
+      <section id="test" class="mb-16">
+        <div class="flex items-center gap-3 mb-6">
+          <span class="step-badge">7</span>
+          <h2 class="text-2xl font-bold">Test It! 🎉</h2>
+        </div>
+
+        <div class="space-y-4">
+          <div class="flex items-start gap-4 p-4 rounded-xl bg-gray-900 border border-gray-800">
+            <span class="step-badge text-sm">1</span>
+            <div>
+              <p class="text-gray-300">Open the dashboard and create a keyword rule:</p>
+              <p class="text-sm text-gray-500 mt-1">Keyword: <code class="px-1.5 py-0.5 rounded bg-gray-800 text-brand-400">hello</code> → Response: <code class="px-1.5 py-0.5 rounded bg-gray-800 text-brand-400">Hey! Thanks for reaching out 👋</code></p>
+            </div>
+          </div>
+          <div class="flex items-start gap-4 p-4 rounded-xl bg-gray-900 border border-gray-800">
+            <span class="step-badge text-sm">2</span>
+            <div>
+              <p class="text-gray-300">Open Instagram and send a DM with <strong class="text-white">"hello"</strong> to your own business account (from another account or use the API test tool).</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-4 p-4 rounded-xl bg-gray-900 border border-gray-800">
+            <span class="step-badge text-sm">3</span>
+            <div>
+              <p class="text-gray-300">If you get an automatic reply — <strong class="text-green-400">you're all set!</strong> 🚀</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Troubleshooting -->
+      <section id="troubleshooting" class="mb-16">
+        <div class="flex items-center gap-3 mb-6">
+          <span class="text-2xl">🔧</span>
+          <h2 class="text-2xl font-bold">Troubleshooting</h2>
+        </div>
+        <div class="overflow-x-auto rounded-xl border border-gray-800">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="bg-gray-800">
+                <th class="text-left px-4 py-3 text-gray-300 font-medium w-1/3">Problem</th>
+                <th class="text-left px-4 py-3 text-gray-300 font-medium">Solution</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-800">
+              <tr class="bg-gray-900">
+                <td class="px-4 py-3 text-gray-300">Webhook verification fails</td>
+                <td class="px-4 py-3 text-gray-400">Make sure your <code class="px-1 py-0.5 rounded bg-gray-800">META_VERIFY_TOKEN</code> matches exactly in both the worker secret and Meta console.</td>
+              </tr>
+              <tr class="bg-gray-900">
+                <td class="px-4 py-3 text-gray-300">No DM reply received</td>
+                <td class="px-4 py-3 text-gray-400">Check that you've subscribed to <code class="px-1 py-0.5 rounded bg-gray-800">messages</code> in the webhook fields. Also verify your Instagram account is a business/creator account.</td>
+              </tr>
+              <tr class="bg-gray-900">
+                <td class="px-4 py-3 text-gray-300">D1 migration error</td>
+                <td class="px-4 py-3 text-gray-400">Make sure you replaced <code class="px-1 py-0.5 rounded bg-gray-800">YOUR_D1_DATABASE_ID</code> in wrangler.toml with the actual database ID.</td>
+              </tr>
+              <tr class="bg-gray-900">
+                <td class="px-4 py-3 text-gray-300">Dashboard shows "Unauthorized"</td>
+                <td class="px-4 py-3 text-gray-400">Your <code class="px-1 py-0.5 rounded bg-gray-800">API_KEY</code> in .env.local must match the <code class="px-1 py-0.5 rounded bg-gray-800">ADMIN_API_KEY</code> secret on the worker.</td>
+              </tr>
+              <tr class="bg-gray-900">
+                <td class="px-4 py-3 text-gray-300">Token expired / invalid</td>
+                <td class="px-4 py-3 text-gray-400">Instagram access tokens can expire. Re-generate from Meta Developer Console → Instagram → API Setup.</td>
+              </tr>
+              <tr class="bg-gray-900">
+                <td class="px-4 py-3 text-gray-300"><code class="px-1 py-0.5 rounded bg-gray-800">wrangler</code> not found</td>
+                <td class="px-4 py-3 text-gray-400">Use <code class="px-1 py-0.5 rounded bg-gray-800">npx wrangler</code> (included in dev dependencies) or install globally: <code class="px-1 py-0.5 rounded bg-gray-800">npm i -g wrangler</code></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- What's Next? -->
+      <section id="whats-next" class="mb-16">
+        <div class="flex items-center gap-3 mb-6">
+          <span class="text-2xl">🚀</span>
+          <h2 class="text-2xl font-bold">What's Next?</h2>
+        </div>
+        <p class="text-gray-400 mb-6">Now that slidein is running, explore these powerful features:</p>
+        <div class="grid gap-4 sm:grid-cols-2">
+          <div class="p-4 rounded-xl bg-gray-900 border border-gray-800 hover:border-brand-500/30 transition">
+            <span class="text-2xl mb-2 block">📋</span>
+            <h3 class="font-semibold mb-1">Scenario Builder</h3>
+            <p class="text-sm text-gray-400">Create multi-step DM sequences triggered by keywords or actions.</p>
+          </div>
+          <div class="p-4 rounded-xl bg-gray-900 border border-gray-800 hover:border-brand-500/30 transition">
+            <span class="text-2xl mb-2 block">📢</span>
+            <h3 class="font-semibold mb-1">Broadcasts</h3>
+            <p class="text-sm text-gray-400">Send bulk messages to segmented audiences.</p>
+          </div>
+          <div class="p-4 rounded-xl bg-gray-900 border border-gray-800 hover:border-brand-500/30 transition">
+            <span class="text-2xl mb-2 block">🤖</span>
+            <h3 class="font-semibold mb-1">AI Auto-Reply</h3>
+            <p class="text-sm text-gray-400">Connect Claude or OpenAI for intelligent, context-aware responses.</p>
+          </div>
+          <div class="p-4 rounded-xl bg-gray-900 border border-gray-800 hover:border-brand-500/30 transition">
+            <span class="text-2xl mb-2 block">🧠</span>
+            <h3 class="font-semibold mb-1">MCP Integration</h3>
+            <p class="text-sm text-gray-400">Control everything from Claude Code via natural language.</p>
+          </div>
+        </div>
+        <div class="mt-8 p-4 rounded-xl bg-brand-500/5 border border-brand-500/20 text-center">
+          <p class="text-gray-300 mb-3">Questions? Feature requests? Contributions welcome!</p>
+          <a href="https://github.com/molt-oss/slidein" target="_blank" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-brand-600 hover:bg-brand-500 text-white font-medium transition">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+            Star on GitHub
+          </a>
+        </div>
+      </section>
+
+      <!-- Footer -->
+      <footer class="pt-8 border-t border-gray-800 text-center text-sm text-gray-500">
+        <p>MIT License © <a href="https://github.com/molt-oss" target="_blank" class="text-brand-400 hover:underline">molt-oss</a></p>
+        <p class="mt-1">
+          <a href="https://github.com/molt-oss/slidein" target="_blank" class="hover:text-brand-400 transition">GitHub</a>
+          <span class="mx-2">·</span>
+          <a href="https://github.com/molt-oss/slidein/issues" target="_blank" class="hover:text-brand-400 transition">Issues</a>
+        </p>
+      </footer>
+    </main>
+  </div>
+
+  <script>
+    // Copy code button
+    function copyCode(btn) {
+      const code = btn.closest('.code-block').querySelector('code');
+      navigator.clipboard.writeText(code.textContent).then(() => {
+        btn.textContent = 'Copied!';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = 'Copy';
+          btn.classList.remove('copied');
+        }, 2000);
+      });
+    }
+
+    // Active nav tracking
+    const sections = document.querySelectorAll('section[id]');
+    const navLinks = document.querySelectorAll('.nav-link');
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          navLinks.forEach(link => {
+            link.classList.toggle('active', link.getAttribute('href') === '#' + entry.target.id);
+          });
+        }
+      });
+    }, { rootMargin: '-20% 0px -80% 0px' });
+
+    sections.forEach(section => observer.observe(section));
+
+    // Mobile menu
+    const menuToggle = document.getElementById('menu-toggle');
+    const mobileNav = document.getElementById('mobile-nav');
+    const mobileNavLinks = document.getElementById('mobile-nav-links');
+
+    // Clone sidebar nav to mobile
+    const sidebarNav = document.getElementById('sidebar-nav');
+    mobileNavLinks.innerHTML = sidebarNav.innerHTML;
+
+    menuToggle.addEventListener('click', () => {
+      mobileNav.classList.toggle('hidden');
+      document.body.classList.toggle('overflow-hidden');
+    });
+
+    mobileNavLinks.querySelectorAll('a').forEach(link => {
+      link.addEventListener('click', () => {
+        mobileNav.classList.add('hidden');
+        document.body.classList.remove('overflow-hidden');
+      });
+    });
+  </script>
+</body>
+</html>

@@ -61,7 +61,7 @@ pnpm run setup
 pnpm --filter worker deploy
 ```
 
-→ Full setup guide: [docs/specs/setup-guide.md](docs/specs/setup-guide.md)
+→ Full setup guide: [molt-oss.github.io/slidein](https://molt-oss.github.io/slidein/)
 
 ## 📋 Prerequisites
 
