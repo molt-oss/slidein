@@ -141,11 +141,20 @@ async function main() {
   header('Step 4/5: デプロイ');
   console.log('シークレットを設定してデプロイするよ...\n');
 
+  // IG_ACCOUNT_ID は秘密じゃないから wrangler.toml の vars に書く
+  toml = readFileSync(TOML_PATH, 'utf8');
+  if (toml.includes('# IG_ACCOUNT_ID')) {
+    toml = toml.replace(/# IG_ACCOUNT_ID = ""/, `IG_ACCOUNT_ID = "${igAccountId}"`);
+  } else if (!toml.includes(`IG_ACCOUNT_ID = "${igAccountId}"`)) {
+    toml = toml.replace(/\[vars\]/, `[vars]\nIG_ACCOUNT_ID = "${igAccountId}"`);
+  }
+  writeFileSync(TOML_PATH, toml);
+  console.log(`✅ IG_ACCOUNT_ID を wrangler.toml に書き込み完了！`);
+
   const secrets = {
     META_APP_SECRET: metaAppSecret,
     META_ACCESS_TOKEN: metaAccessToken,
     META_VERIFY_TOKEN: metaVerifyToken,
-    IG_ACCOUNT_ID: igAccountId,
     ADMIN_API_KEY: adminApiKey,
   };
 
