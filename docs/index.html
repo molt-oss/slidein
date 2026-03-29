@@ -204,7 +204,7 @@ pnpm install</code></pre>
               ⚠️ Don't select "Other" or "Advertising" — Instagram API won't be available! Make sure to pick <strong class="text-white">"Business Messaging" → "Manage messages and content on Instagram"</strong>.
             </div>
             <div class="mt-3 p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20 text-sm text-gray-300">
-              ⚠️ The dashboard will show "Business Verification" and "App Review" steps — <strong class="text-white">you can skip both!</strong> slidein works in Development Mode, which doesn't require either.
+              ⚠️ The dashboard will show "Business Verification" and "App Review" steps — <strong class="text-white">you can skip both for now.</strong> slidein works in Live Mode with Standard Access (no review needed). See Step 4.5 below.
             </div>
           </div>
 
@@ -246,6 +246,31 @@ pnpm install</code></pre>
               </table>
             </div>
           </div>
+          <div>
+            <h3 class="text-lg font-semibold mb-2">2.6 — Add a Privacy Policy URL</h3>
+            <p class="text-gray-400 text-sm mb-2">Meta requires a Privacy Policy URL to switch your app to Live Mode (next step).</p>
+            <ol class="list-decimal list-inside space-y-2 text-sm text-gray-400">
+              <li>Go to <strong class="text-white">App Settings → Basic</strong></li>
+              <li>In the <strong class="text-white">Privacy Policy URL</strong> field, enter your privacy policy URL (any public URL works — you can use a simple page on GitHub Pages or your website)</li>
+              <li>Click <strong class="text-white">Save Changes</strong></li>
+            </ol>
+          </div>
+
+          <div>
+            <h3 class="text-lg font-semibold mb-2">2.7 — Switch to Live Mode 🔴</h3>
+            <p class="text-gray-400 text-sm mb-2">This is critical — <strong class="text-white">Instagram webhooks only fire in Live Mode!</strong></p>
+            <ol class="list-decimal list-inside space-y-2 text-sm text-gray-400">
+              <li>Go to <strong class="text-white">App Settings → Basic</strong></li>
+              <li>At the top, toggle <strong class="text-white">App Mode</strong> from "Development" to <strong class="text-white">"Live"</strong></li>
+            </ol>
+            <div class="mt-3 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-sm text-gray-300">
+              🚨 <strong class="text-white">If you skip this step, your app will NOT receive any real Instagram DMs.</strong> The webhook test button in Meta console will work, but actual DMs won't trigger webhooks. This is a Meta platform requirement.
+            </div>
+            <div class="mt-3 p-3 rounded-lg bg-green-500/10 border border-green-500/20 text-sm text-gray-300">
+              ✅ <strong class="text-white">No App Review or Business Verification needed!</strong> Live Mode with Standard Access works for all Instagram users — anyone can DM your business account and get automated replies.
+            </div>
+          </div>
+
         </div>
       </section>
 
@@ -399,8 +424,12 @@ pnpm install</code></pre>
                 <td class="px-4 py-3 text-gray-400">Make sure your <code class="px-1 py-0.5 rounded bg-gray-800">META_VERIFY_TOKEN</code> matches exactly in both the worker secret and Meta console.</td>
               </tr>
               <tr class="bg-gray-900">
+                <td class="px-4 py-3 text-gray-300">Webhook test works but real DMs don't trigger</td>
+                <td class="px-4 py-3 text-gray-400"><strong class="text-gray-200">Your app is in Development Mode.</strong> Instagram webhooks only fire in Live Mode. Go to App Settings → Basic → switch App Mode to "Live". You'll need a Privacy Policy URL first (see Step 2.6).</td>
+              </tr>
+              <tr class="bg-gray-900">
                 <td class="px-4 py-3 text-gray-300">No DM reply received</td>
-                <td class="px-4 py-3 text-gray-400">Check that you've subscribed to <code class="px-1 py-0.5 rounded bg-gray-800">messages</code> in the webhook fields. Also verify your Instagram account is a business/creator account.</td>
+                <td class="px-4 py-3 text-gray-400">Check that you've subscribed to <code class="px-1 py-0.5 rounded bg-gray-800">messages</code> in the webhook fields. Also verify your Instagram account is a business/creator account and the app is in Live Mode.</td>
               </tr>
               <tr class="bg-gray-900">
                 <td class="px-4 py-3 text-gray-300">Setup script fails</td>
