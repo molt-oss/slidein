@@ -10,6 +10,7 @@
     "url": "https://github.com/molt-oss/slidein.git"
   },
   "scripts": {
+    "setup": "node scripts/setup.mjs",
     "dev": "pnpm --filter worker dev",
     "build": "pnpm -r build",
     "test": "pnpm -r test",
