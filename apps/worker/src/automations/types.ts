@@ -8,6 +8,8 @@ export const AutomationActionSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("remove_tag"), tag: z.string() }),
   z.object({ type: z.literal("start_scenario"), scenarioId: z.string() }),
   z.object({ type: z.literal("send_message"), messageText: z.string() }),
+  z.object({ type: z.literal("record_conversion"), goalId: z.string() }),
+  z.object({ type: z.literal("start_form"), formId: z.string() }),
 ]);
 
 export type AutomationAction = z.infer<typeof AutomationActionSchema>;

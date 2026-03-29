@@ -4,6 +4,8 @@
 import { structuredLog } from "@slidein/shared";
 import { ContactService } from "../contacts/service.js";
 import { ScenarioService } from "../scenarios/service.js";
+import { ConversionService } from "../conversions/service.js";
+import { FormService } from "../forms/service.js";
 import { MessageRepository } from "../messaging/repository.js";
 import { PendingMessageRepository } from "../messaging/pending-message-repository.js";
 import { sendTextMessage, consumeToken } from "@slidein/meta-sdk";
@@ -158,6 +160,18 @@ export class AutomationService {
       case "send_message":
         if (action.messageText) {
           await this.sendMessage(contactId, action.messageText);
+        }
+        break;
+      case "record_conversion":
+        if (action.goalId) {
+          const conversionService = new ConversionService(this.deps.db);
+          await conversionService.recordConversion(action.goalId, contactId);
+        }
+        break;
+      case "start_form":
+        if (action.formId) {
+          const formService = new FormService(this.deps);
+          await formService.startForm(action.formId, contactId);
         }
         break;
       default: {

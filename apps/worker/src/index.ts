@@ -12,6 +12,11 @@ import { scenarioApi } from "./handlers/scenario-api-handler.js";
 import { broadcastApi } from "./handlers/broadcast-api-handler.js";
 import { scoringApi } from "./handlers/scoring-api-handler.js";
 import { automationApi } from "./handlers/automation-api-handler.js";
+import { trackingApi } from "./handlers/tracking-api-handler.js";
+import { webhookOutApi } from "./handlers/webhook-out-api-handler.js";
+import { conversionApi } from "./handlers/conversion-api-handler.js";
+import { formApi } from "./handlers/form-api-handler.js";
+import { deliverySettingsApi } from "./handlers/delivery-settings-api-handler.js";
 import { MessageService } from "./messaging/service.js";
 import { ScenarioService } from "./scenarios/service.js";
 import { BroadcastService } from "./broadcasts/service.js";
@@ -38,6 +43,21 @@ app.route("/", scoringApi);
 
 // 自動化ルール API ルート
 app.route("/", automationApi);
+
+// トラッキングリンク API + リダイレクトルート
+app.route("/", trackingApi);
+
+// Webhook OUT API ルート
+app.route("/", webhookOutApi);
+
+// CV計測 API ルート
+app.route("/", conversionApi);
+
+// フォーム API ルート
+app.route("/", formApi);
+
+// 配信時間帯設定 API ルート
+app.route("/", deliverySettingsApi);
 
 // 404 ハンドラ
 app.notFound((c) => c.json({ error: "Not found" }, 404));

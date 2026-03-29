@@ -358,4 +358,190 @@ export async function deleteAutomation(id: string) {
   });
 }
 
+// --- Tracked Links ---
+
+export interface TrackedLink {
+  id: string;
+  originalUrl: string;
+  shortCode: string;
+  contactTag: string | null;
+  scenarioId: string | null;
+  clickCount: number;
+  createdAt: string;
+}
+
+export async function fetchTrackedLinks() {
+  return request<{ data: TrackedLink[] }>("/api/tracked-links");
+}
+
+export async function createTrackedLink(input: {
+  originalUrl: string;
+  contactTag?: string | null;
+  scenarioId?: string | null;
+}) {
+  return request<{ data: TrackedLink }>("/api/tracked-links", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export async function deleteTrackedLink(id: string) {
+  return request<{ success: boolean }>(`/api/tracked-links/${id}`, {
+    method: "DELETE",
+  });
+}
+
+// --- Webhook Endpoints ---
+
+export interface WebhookEndpoint {
+  id: string;
+  url: string;
+  events: string[];
+  secret: string;
+  enabled: boolean;
+  createdAt: string;
+}
+
+export async function fetchWebhookEndpoints() {
+  return request<{ data: WebhookEndpoint[] }>("/api/webhook-endpoints");
+}
+
+export async function createWebhookEndpoint(input: {
+  url: string;
+  events: string[];
+  secret: string;
+}) {
+  return request<{ data: WebhookEndpoint }>("/api/webhook-endpoints", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export async function deleteWebhookEndpoint(id: string) {
+  return request<{ success: boolean }>(`/api/webhook-endpoints/${id}`, {
+    method: "DELETE",
+  });
+}
+
+// --- Conversion Goals ---
+
+export interface ConversionGoal {
+  id: string;
+  name: string;
+  eventType: string;
+  targetValue: string | null;
+  createdAt: string;
+}
+
+export interface ConversionReport {
+  goalId: string;
+  goalName: string;
+  totalConversions: number;
+  uniqueContacts: number;
+  totalContacts: number;
+  cvr: number;
+}
+
+export async function fetchConversionGoals() {
+  return request<{ data: ConversionGoal[] }>("/api/conversion-goals");
+}
+
+export async function createConversionGoal(input: {
+  name: string;
+  eventType: string;
+  targetValue?: string | null;
+}) {
+  return request<{ data: ConversionGoal }>("/api/conversion-goals", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export async function fetchConversionReport(goalId: string) {
+  return request<{ data: ConversionReport }>(
+    `/api/conversion-goals/${goalId}/report`,
+  );
+}
+
+export async function deleteConversionGoal(id: string) {
+  return request<{ success: boolean }>(`/api/conversion-goals/${id}`, {
+    method: "DELETE",
+  });
+}
+
+// --- Forms ---
+
+export interface FormField {
+  label: string;
+  type: "text" | "number" | "email" | "select";
+  key: string;
+}
+
+export interface Form {
+  id: string;
+  name: string;
+  fields: FormField[];
+  thankYouMessage: string;
+  createdAt: string;
+}
+
+export interface FormResponse {
+  id: string;
+  formId: string;
+  contactId: string;
+  responses: Record<string, string>;
+  currentFieldIndex: number;
+  completedAt: string | null;
+  createdAt: string;
+}
+
+export async function fetchForms() {
+  return request<{ data: Form[] }>("/api/forms");
+}
+
+export async function createForm(input: {
+  name: string;
+  fields: FormField[];
+  thankYouMessage?: string;
+}) {
+  return request<{ data: Form }>("/api/forms", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export async function fetchFormResponses(formId: string) {
+  return request<{ data: FormResponse[] }>(`/api/forms/${formId}/responses`);
+}
+
+export async function deleteForm(id: string) {
+  return request<{ success: boolean }>(`/api/forms/${id}`, {
+    method: "DELETE",
+  });
+}
+
+// --- Delivery Settings ---
+
+export interface DeliverySettings {
+  id: string;
+  startHour: number;
+  endHour: number;
+  timezone: string;
+}
+
+export async function fetchDeliverySettings() {
+  return request<{ data: DeliverySettings }>("/api/delivery-settings");
+}
+
+export async function updateDeliverySettings(input: {
+  startHour: number;
+  endHour: number;
+  timezone: string;
+}) {
+  return request<{ data: DeliverySettings }>("/api/delivery-settings", {
+    method: "PUT",
+    body: JSON.stringify(input),
+  });
+}
+
 export { ApiError };

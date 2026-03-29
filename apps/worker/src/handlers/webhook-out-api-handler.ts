@@ -1,0 +1,53 @@
+/**
+ * Webhook OUT API Handler — 外部通知エンドポイント管理
+ */
+import { Hono } from "hono";
+import { structuredLog } from "@slidein/shared";
+import type { Env } from "../config/env.js";
+import { WebhookService } from "../webhooks/service.js";
+import { CreateWebhookEndpointSchema } from "../webhooks/types.js";
+import { bearerAuth } from "../middleware/auth.js";
+
+const webhookOutApi = new Hono<{ Bindings: Env }>();
+
+webhookOutApi.use("/api/*", bearerAuth());
+
+webhookOutApi.get("/api/webhook-endpoints", async (c) => {
+  const service = new WebhookService(c.env.DB);
+  const endpoints = await service.listAll();
+  return c.json({ data: endpoints });
+});
+
+webhookOutApi.post("/api/webhook-endpoints", async (c) => {
+  const body = await c.req.json();
+  const parseResult = CreateWebhookEndpointSchema.safeParse(body);
+
+  if (!parseResult.success) {
+    return c.json({ error: parseResult.error.flatten() }, 400);
+  }
+
+  const service = new WebhookService(c.env.DB);
+  const endpoint = await service.create(parseResult.data);
+
+  structuredLog("info", "Webhook endpoint created via API", {
+    endpointId: endpoint.id,
+  });
+  return c.json({ data: endpoint }, 201);
+});
+
+webhookOutApi.delete("/api/webhook-endpoints/:id", async (c) => {
+  const id = c.req.param("id");
+  const service = new WebhookService(c.env.DB);
+  const deleted = await service.delete(id);
+
+  if (!deleted) {
+    return c.json({ error: "Not found" }, 404);
+  }
+
+  structuredLog("info", "Webhook endpoint deleted via API", {
+    endpointId: id,
+  });
+  return c.json({ success: true });
+});
+
+export { webhookOutApi };

@@ -119,3 +119,69 @@ export interface AutomationRuleRow {
   enabled: number; // 0 or 1
   created_at: string;
 }
+
+export interface TrackedLinkRow {
+  id: string;
+  original_url: string;
+  short_code: string;
+  contact_tag: string | null;
+  scenario_id: string | null;
+  click_count: number;
+  created_at: string;
+}
+
+export interface LinkClickRow {
+  id: string;
+  tracked_link_id: string;
+  contact_id: string;
+  clicked_at: string;
+}
+
+export interface DeliverySettingsRow {
+  id: string;
+  start_hour: number;
+  end_hour: number;
+  timezone: string;
+}
+
+export interface WebhookEndpointRow {
+  id: string;
+  url: string;
+  events: string; // JSON array
+  secret: string;
+  enabled: number; // 0 or 1
+  created_at: string;
+}
+
+export interface ConversionGoalRow {
+  id: string;
+  name: string;
+  event_type: string;
+  target_value: string | null;
+  created_at: string;
+}
+
+export interface ConversionRow {
+  id: string;
+  goal_id: string;
+  contact_id: string;
+  converted_at: string;
+}
+
+export interface FormRow {
+  id: string;
+  name: string;
+  fields: string; // JSON array
+  thank_you_message: string;
+  created_at: string;
+}
+
+export interface FormResponseRow {
+  id: string;
+  form_id: string;
+  contact_id: string;
+  responses: string; // JSON object
+  current_field_index: number;
+  completed_at: string | null;
+  created_at: string;
+}

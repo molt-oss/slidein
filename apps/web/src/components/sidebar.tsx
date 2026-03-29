@@ -14,6 +14,11 @@ const NAV_ITEMS = [
   { href: "/contacts", label: "Contacts", icon: "👥" },
   { href: "/scoring", label: "Scoring", icon: "⭐" },
   { href: "/automations", label: "Automations", icon: "⚡" },
+  { href: "/tracking", label: "Tracking", icon: "🔗" },
+  { href: "/webhooks", label: "Webhooks", icon: "🪝" },
+  { href: "/conversions", label: "Conversions", icon: "🎯" },
+  { href: "/forms", label: "Forms", icon: "📝" },
+  { href: "/settings", label: "Settings", icon: "⚙️" },
 ];
 
 export function Sidebar() {
