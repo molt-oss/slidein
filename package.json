@@ -10,13 +10,12 @@
     "url": "https://github.com/molt-oss/slidein.git"
   },
   "scripts": {
-    "setup": "node scripts/setup.mjs",
+    "setup": "npx tsx scripts/setup.ts",
     "dev": "pnpm --filter worker dev",
     "build": "pnpm -r build",
     "test": "pnpm -r test",
     "lint": "pnpm -r lint",
-    "typecheck": "pnpm -r typecheck",
-    "setup": "npx tsx scripts/setup.ts"
+    "typecheck": "pnpm -r typecheck"
   },
   "engines": {
     "node": ">=20.0.0"
