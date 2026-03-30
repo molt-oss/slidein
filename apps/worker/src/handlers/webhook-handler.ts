@@ -25,7 +25,7 @@ webhook.get("/webhook", (c) => {
     return c.text(challenge ?? "", 200);
   }
 
-  structuredLog("warn", "Webhook verification failed", { mode, token });
+  structuredLog("warn", "Webhook verification failed", { mode });
   return c.text("Forbidden", 403);
 });
 
@@ -56,14 +56,17 @@ webhook.post("/webhook", async (c) => {
     parsed = JSON.parse(rawBody);
   } catch {
     structuredLog("error", "Webhook body is not valid JSON", {
-      body: rawBody.slice(0, 500),
+      bodyLength: rawBody.length,
     });
     return c.text("Bad Request", 400);
   }
 
-  // デバッグ: 受信ペイロードをログ出力
+  // 受信ペイロードのメタデータのみログ出力
   structuredLog("info", "Webhook payload received", {
-    body: rawBody.slice(0, 1000),
+    objectType: (parsed as Record<string, unknown>).object,
+    entryCount: Array.isArray((parsed as Record<string, unknown>).entry)
+      ? ((parsed as Record<string, unknown>).entry as unknown[]).length
+      : 0,
   });
 
   const parseResult = WebhookPayloadSchema.safeParse(parsed);
