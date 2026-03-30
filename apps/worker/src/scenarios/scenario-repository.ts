@@ -30,7 +30,7 @@ function rowToStep(row: ScenarioStepRow): ScenarioStep {
 }
 
 export class ScenarioRepository {
-  constructor(private readonly db: D1Database) {}
+  constructor(private readonly db: D1Database, private readonly accountId: string = 'default') {}
 
   async findAll(): Promise<ScenarioWithSteps[]> {
     // JOIN query to avoid N+1
@@ -164,7 +164,7 @@ export class ScenarioRepository {
   async delete(id: string): Promise<boolean> {
     const result = await this.db
       .prepare("DELETE FROM scenarios WHERE id = ?")
-      .bind(id)
+      .bind(id, this.accountId)
       .run();
     return (result.meta.changes ?? 0) > 0;
   }

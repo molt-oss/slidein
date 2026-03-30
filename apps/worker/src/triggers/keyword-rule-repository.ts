@@ -16,19 +16,19 @@ function rowToKeywordRule(row: KeywordRuleRow): KeywordRule {
 }
 
 export class KeywordRuleRepository {
-  constructor(private readonly db: D1Database) {}
+  constructor(private readonly db: D1Database, private readonly accountId: string = 'default') {}
 
   async findAllEnabled(): Promise<KeywordRule[]> {
     const result = await this.db
-      .prepare("SELECT * FROM keyword_rules WHERE enabled = 1")
-      .all<KeywordRuleRow>();
+      .prepare("SELECT * FROM keyword_rules WHERE account_id = ? AND enabled = 1")
+      .bind(this.accountId).all<KeywordRuleRow>();
     return result.results.map(rowToKeywordRule);
   }
 
   async findAll(): Promise<KeywordRule[]> {
     const result = await this.db
-      .prepare("SELECT * FROM keyword_rules ORDER BY created_at DESC")
-      .all<KeywordRuleRow>();
+      .prepare("SELECT * FROM keyword_rules WHERE account_id = ? ORDER BY created_at DESC")
+      .bind(this.accountId).all<KeywordRuleRow>();
     return result.results.map(rowToKeywordRule);
   }
 
@@ -39,9 +39,9 @@ export class KeywordRuleRepository {
   ): Promise<KeywordRule> {
     const result = await this.db
       .prepare(
-        "INSERT INTO keyword_rules (keyword, match_type, response_text) VALUES (?, ?, ?) RETURNING *",
+        "INSERT INTO keyword_rules (account_id, keyword, match_type, response_text) VALUES (?, ?, ?, ?) RETURNING *",
       )
-      .bind(keyword, matchType, responseText)
+      .bind(this.accountId, keyword, matchType, responseText)
       .first<KeywordRuleRow>();
 
     if (!result) {
@@ -52,8 +52,8 @@ export class KeywordRuleRepository {
 
   async delete(id: string): Promise<boolean> {
     const result = await this.db
-      .prepare("DELETE FROM keyword_rules WHERE id = ?")
-      .bind(id)
+      .prepare("DELETE FROM keyword_rules WHERE id = ? AND account_id = ?")
+      .bind(id, this.accountId)
       .run();
     return (result.meta.changes ?? 0) > 0;
   }

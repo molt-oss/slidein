@@ -35,7 +35,7 @@ function generateShortCode(): string {
 }
 
 export class TrackedLinkRepository {
-  constructor(private readonly db: D1Database) {}
+  constructor(private readonly db: D1Database, private readonly accountId: string = 'default') {}
 
   async findAll(): Promise<TrackedLink[]> {
     const result = await this.db
@@ -93,7 +93,7 @@ export class TrackedLinkRepository {
   async incrementClickCount(id: string): Promise<void> {
     await this.db
       .prepare("UPDATE tracked_links SET click_count = click_count + 1 WHERE id = ?")
-      .bind(id)
+      .bind(id, this.accountId)
       .run();
   }
 
@@ -109,7 +109,7 @@ export class TrackedLinkRepository {
   async delete(id: string): Promise<boolean> {
     const result = await this.db
       .prepare("DELETE FROM tracked_links WHERE id = ?")
-      .bind(id)
+      .bind(id, this.accountId)
       .run();
     return result.meta.changes > 0;
   }

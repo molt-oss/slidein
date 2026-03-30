@@ -20,7 +20,7 @@ function rowToSettings(row: DeliverySettingsRow): DeliverySettings {
 }
 
 export class DeliverySettingsRepository {
-  constructor(private readonly db: D1Database) {}
+  constructor(private readonly db: D1Database, private readonly accountId: string = 'default') {}
 
   async get(): Promise<DeliverySettings> {
     const row = await this.db

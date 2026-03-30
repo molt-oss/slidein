@@ -35,7 +35,7 @@ function rowToPendingMessage(row: PendingMessageRow): PendingMessage {
 }
 
 export class PendingMessageRepository {
-  constructor(private readonly db: D1Database) {}
+  constructor(private readonly db: D1Database, private readonly accountId: string = 'default') {}
 
   /** メッセージをキューに追加 */
   async enqueue(
@@ -71,7 +71,7 @@ export class PendingMessageRepository {
   async markSent(id: string): Promise<void> {
     await this.db
       .prepare("UPDATE pending_messages SET status = 'sent' WHERE id = ?")
-      .bind(id)
+      .bind(id, this.accountId)
       .run();
   }
 
@@ -79,7 +79,7 @@ export class PendingMessageRepository {
   async markFailed(id: string): Promise<void> {
     await this.db
       .prepare("UPDATE pending_messages SET status = 'failed' WHERE id = ?")
-      .bind(id)
+      .bind(id, this.accountId)
       .run();
   }
 }

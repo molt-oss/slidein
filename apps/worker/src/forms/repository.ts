@@ -27,7 +27,7 @@ function rowToFormResponse(row: FormResponseRow): FormResponse {
 }
 
 export class FormRepository {
-  constructor(private readonly db: D1Database) {}
+  constructor(private readonly db: D1Database, private readonly accountId: string = 'default') {}
 
   async findAll(): Promise<Form[]> {
     const result = await this.db
@@ -63,14 +63,14 @@ export class FormRepository {
   async delete(id: string): Promise<boolean> {
     const result = await this.db
       .prepare("DELETE FROM forms WHERE id = ?")
-      .bind(id)
+      .bind(id, this.accountId)
       .run();
     return result.meta.changes > 0;
   }
 }
 
 export class FormResponseRepository {
-  constructor(private readonly db: D1Database) {}
+  constructor(private readonly db: D1Database, private readonly accountId: string = 'default') {}
 
   async findByFormId(formId: string): Promise<FormResponse[]> {
     const result = await this.db
@@ -129,7 +129,7 @@ export class FormResponseRepository {
       .prepare(
         "UPDATE form_responses SET completed_at = datetime('now') WHERE id = ?",
       )
-      .bind(id)
+      .bind(id, this.accountId)
       .run();
   }
 }

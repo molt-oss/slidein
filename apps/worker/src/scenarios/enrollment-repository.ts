@@ -18,7 +18,7 @@ function rowToEnrollment(row: ScenarioEnrollmentRow): ScenarioEnrollment {
 }
 
 export class EnrollmentRepository {
-  constructor(private readonly db: D1Database) {}
+  constructor(private readonly db: D1Database, private readonly accountId: string = 'default') {}
 
   async enroll(
     contactId: string,
@@ -59,7 +59,7 @@ export class EnrollmentRepository {
          SET status = 'completed', next_send_at = NULL, updated_at = datetime('now')
          WHERE id = ?`,
       )
-      .bind(id)
+      .bind(id, this.accountId)
       .run();
   }
 
@@ -70,7 +70,7 @@ export class EnrollmentRepository {
          SET status = 'cancelled', next_send_at = NULL, updated_at = datetime('now')
          WHERE id = ?`,
       )
-      .bind(id)
+      .bind(id, this.accountId)
       .run();
   }
 

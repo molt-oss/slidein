@@ -15,7 +15,7 @@ function rowToScoringRule(row: ScoringRuleRow): ScoringRule {
 }
 
 export class ScoringRuleRepository {
-  constructor(private readonly db: D1Database) {}
+  constructor(private readonly db: D1Database, private readonly accountId: string = 'default') {}
 
   async findAll(): Promise<ScoringRule[]> {
     const result = await this.db
@@ -48,7 +48,7 @@ export class ScoringRuleRepository {
   async delete(id: string): Promise<boolean> {
     const result = await this.db
       .prepare("DELETE FROM scoring_rules WHERE id = ?")
-      .bind(id)
+      .bind(id, this.accountId)
       .run();
     return result.meta.changes > 0;
   }
@@ -56,16 +56,16 @@ export class ScoringRuleRepository {
   /** コンタクトのスコアを加算 */
   async addScore(contactId: string, points: number): Promise<void> {
     await this.db
-      .prepare("UPDATE contacts SET score = score + ? WHERE id = ?")
-      .bind(points, contactId)
+      .prepare("UPDATE contacts SET score = score + ? WHERE id = ? AND account_id = ?")
+      .bind(points, contactId, this.accountId)
       .run();
   }
 
   /** コンタクトのスコアを取得 */
   async getScore(contactId: string): Promise<number> {
     const row = await this.db
-      .prepare("SELECT score FROM contacts WHERE id = ?")
-      .bind(contactId)
+      .prepare("SELECT score FROM contacts WHERE id = ? AND account_id = ?")
+      .bind(contactId, this.accountId)
       .first<{ score: number }>();
     return row?.score ?? 0;
   }

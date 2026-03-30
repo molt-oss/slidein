@@ -50,7 +50,7 @@ function rowToAutomationRule(row: AutomationRuleRow): AutomationRule | null {
 }
 
 export class AutomationRuleRepository {
-  constructor(private readonly db: D1Database) {}
+  constructor(private readonly db: D1Database, private readonly accountId: string = 'default') {}
 
   async findAll(): Promise<AutomationRule[]> {
     const result = await this.db
@@ -141,7 +141,7 @@ export class AutomationRuleRepository {
   async delete(id: string): Promise<boolean> {
     const result = await this.db
       .prepare("DELETE FROM automation_rules WHERE id = ?")
-      .bind(id)
+      .bind(id, this.accountId)
       .run();
     return result.meta.changes > 0;
   }

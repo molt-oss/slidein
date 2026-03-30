@@ -20,7 +20,7 @@ function rowToBroadcast(row: BroadcastRow): Broadcast {
 }
 
 export class BroadcastRepository {
-  constructor(private readonly db: D1Database) {}
+  constructor(private readonly db: D1Database, private readonly accountId: string = 'default') {}
 
   async findAll(): Promise<Broadcast[]> {
     const result = await this.db
@@ -79,21 +79,21 @@ export class BroadcastRepository {
   async incrementSentCount(id: string): Promise<void> {
     await this.db
       .prepare("UPDATE broadcasts SET sent_count = sent_count + 1 WHERE id = ?")
-      .bind(id)
+      .bind(id, this.accountId)
       .run();
   }
 
   async incrementFailedCount(id: string): Promise<void> {
     await this.db
       .prepare("UPDATE broadcasts SET failed_count = failed_count + 1 WHERE id = ?")
-      .bind(id)
+      .bind(id, this.accountId)
       .run();
   }
 
   async delete(id: string): Promise<boolean> {
     const result = await this.db
       .prepare("DELETE FROM broadcasts WHERE id = ?")
-      .bind(id)
+      .bind(id, this.accountId)
       .run();
     return result.meta.changes > 0;
   }

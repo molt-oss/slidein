@@ -16,7 +16,7 @@ function rowToMessage(row: MessageRow): Message {
 }
 
 export class MessageRepository {
-  constructor(private readonly db: D1Database) {}
+  constructor(private readonly db: D1Database, private readonly accountId: string = 'default') {}
 
   async create(
     contactId: string,
@@ -24,11 +24,21 @@ export class MessageRepository {
     content: string,
     igMessageId?: string | null,
   ): Promise<Message> {
+    if (this.accountId === 'default') {
+      const result = await this.db
+        .prepare(
+          "INSERT INTO messages (contact_id, direction, content, ig_message_id) VALUES (?, ?, ?, ?) RETURNING *",
+        )
+        .bind(contactId, direction, content, igMessageId ?? null)
+        .first<MessageRow>();
+      if (result) return rowToMessage(result);
+    }
+
     const result = await this.db
       .prepare(
-        "INSERT INTO messages (contact_id, direction, content, ig_message_id) VALUES (?, ?, ?, ?) RETURNING *",
+        "INSERT INTO messages (account_id, contact_id, direction, content, ig_message_id) VALUES (?, ?, ?, ?, ?) RETURNING *",
       )
-      .bind(contactId, direction, content, igMessageId ?? null)
+      .bind(this.accountId, contactId, direction, content, igMessageId ?? null)
       .first<MessageRow>();
 
     if (!result) {
@@ -40,9 +50,9 @@ export class MessageRepository {
   async findByContactId(contactId: string): Promise<Message[]> {
     const result = await this.db
       .prepare(
-        "SELECT * FROM messages WHERE contact_id = ? ORDER BY created_at DESC",
+        "SELECT * FROM messages WHERE contact_id = ? AND account_id = ? ORDER BY created_at DESC",
       )
-      .bind(contactId)
+      .bind(contactId, this.accountId)
       .all<MessageRow>();
     return result.results.map(rowToMessage);
   }

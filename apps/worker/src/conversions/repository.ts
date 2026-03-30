@@ -24,7 +24,7 @@ function rowToConversion(row: ConversionRow): Conversion {
 }
 
 export class ConversionGoalRepository {
-  constructor(private readonly db: D1Database) {}
+  constructor(private readonly db: D1Database, private readonly accountId: string = 'default') {}
 
   async findAll(): Promise<ConversionGoal[]> {
     const result = await this.db
@@ -60,14 +60,14 @@ export class ConversionGoalRepository {
   async delete(id: string): Promise<boolean> {
     const result = await this.db
       .prepare("DELETE FROM conversion_goals WHERE id = ?")
-      .bind(id)
+      .bind(id, this.accountId)
       .run();
     return result.meta.changes > 0;
   }
 }
 
 export class ConversionRepository {
-  constructor(private readonly db: D1Database) {}
+  constructor(private readonly db: D1Database, private readonly accountId: string = 'default') {}
 
   async record(goalId: string, contactId: string): Promise<Conversion> {
     const row = await this.db

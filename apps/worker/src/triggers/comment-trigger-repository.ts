@@ -16,19 +16,19 @@ function rowToCommentTrigger(row: CommentTriggerRow): CommentTrigger {
 }
 
 export class CommentTriggerRepository {
-  constructor(private readonly db: D1Database) {}
+  constructor(private readonly db: D1Database, private readonly accountId: string = 'default') {}
 
   async findAllEnabled(): Promise<CommentTrigger[]> {
     const result = await this.db
-      .prepare("SELECT * FROM comment_triggers WHERE enabled = 1")
-      .all<CommentTriggerRow>();
+      .prepare("SELECT * FROM comment_triggers WHERE account_id = ? AND enabled = 1")
+      .bind(this.accountId).all<CommentTriggerRow>();
     return result.results.map(rowToCommentTrigger);
   }
 
   async findAll(): Promise<CommentTrigger[]> {
     const result = await this.db
-      .prepare("SELECT * FROM comment_triggers ORDER BY created_at DESC")
-      .all<CommentTriggerRow>();
+      .prepare("SELECT * FROM comment_triggers WHERE account_id = ? ORDER BY created_at DESC")
+      .bind(this.accountId).all<CommentTriggerRow>();
     return result.results.map(rowToCommentTrigger);
   }
 
@@ -39,9 +39,9 @@ export class CommentTriggerRepository {
   ): Promise<CommentTrigger> {
     const result = await this.db
       .prepare(
-        "INSERT INTO comment_triggers (media_id_filter, keyword_filter, dm_response_text) VALUES (?, ?, ?) RETURNING *",
+        "INSERT INTO comment_triggers (account_id, media_id_filter, keyword_filter, dm_response_text) VALUES (?, ?, ?, ?) RETURNING *",
       )
-      .bind(mediaIdFilter ?? null, keywordFilter ?? null, dmResponseText)
+      .bind(this.accountId, mediaIdFilter ?? null, keywordFilter ?? null, dmResponseText)
       .first<CommentTriggerRow>();
 
     if (!result) {
@@ -52,8 +52,8 @@ export class CommentTriggerRepository {
 
   async delete(id: string): Promise<boolean> {
     const result = await this.db
-      .prepare("DELETE FROM comment_triggers WHERE id = ?")
-      .bind(id)
+      .prepare("DELETE FROM comment_triggers WHERE id = ? AND account_id = ?")
+      .bind(id, this.accountId)
       .run();
     return (result.meta.changes ?? 0) > 0;
   }

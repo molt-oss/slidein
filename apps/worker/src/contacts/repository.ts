@@ -18,27 +18,33 @@ function rowToContact(row: ContactRow): Contact {
 }
 
 export class ContactRepository {
-  constructor(private readonly db: D1Database) {}
+  constructor(private readonly db: D1Database, private readonly accountId: string = 'default') {}
 
   async findById(id: string): Promise<Contact | null> {
     const row = await this.db
-      .prepare("SELECT * FROM contacts WHERE id = ?")
-      .bind(id)
+      .prepare("SELECT * FROM contacts WHERE id = ? AND account_id = ?")
+      .bind(id, this.accountId)
       .first<ContactRow>();
     return row ? rowToContact(row) : null;
   }
 
   async findByIgUserId(igUserId: string): Promise<Contact | null> {
-    const row = await this.db
-      .prepare("SELECT * FROM contacts WHERE ig_user_id = ?")
-      .bind(igUserId)
-      .first<ContactRow>();
+    const row = this.accountId === 'default'
+      ? await this.db
+          .prepare("SELECT * FROM contacts WHERE ig_user_id = ?")
+          .bind(igUserId)
+          .first<ContactRow>()
+      : await this.db
+          .prepare("SELECT * FROM contacts WHERE ig_user_id = ? AND account_id = ?")
+          .bind(igUserId, this.accountId)
+          .first<ContactRow>();
     return row ? rowToContact(row) : null;
   }
 
   async findAll(): Promise<Contact[]> {
     const result = await this.db
-      .prepare("SELECT * FROM contacts ORDER BY last_message_at DESC")
+      .prepare("SELECT * FROM contacts WHERE account_id = ? ORDER BY last_message_at DESC")
+      .bind(this.accountId)
       .all<ContactRow>();
     return result.results.map(rowToContact);
   }
@@ -49,49 +55,69 @@ export class ContactRepository {
     displayName?: string | null,
   ): Promise<Contact> {
     const now = new Date().toISOString();
-    await this.db
-      .prepare(
-        "INSERT INTO contacts (ig_user_id, username, display_name, first_seen_at, last_message_at) VALUES (?, ?, ?, ?, ?)",
-      )
-      .bind(igUserId, username ?? null, displayName ?? null, now, now)
-      .run();
+    if (this.accountId === 'default') {
+      await this.db
+        .prepare(
+          "INSERT INTO contacts (ig_user_id, username, display_name, first_seen_at, last_message_at) VALUES (?, ?, ?, ?, ?)",
+        )
+        .bind(igUserId, username ?? null, displayName ?? null, now, now)
+        .run();
 
-    const created = await this.findByIgUserId(igUserId);
-    if (!created) {
-      throw new Error("Failed to create contact");
+      const created = await this.findByIgUserId(igUserId);
+      if (created) return created;
     }
-    return created;
+
+    const created = await this.db
+      .prepare(
+        "INSERT INTO contacts (account_id, ig_user_id, username, display_name, first_seen_at, last_message_at) VALUES (?, ?, ?, ?, ?, ?) RETURNING *",
+      )
+      .bind(this.accountId, igUserId, username ?? null, displayName ?? null, now, now)
+      .first<ContactRow>();
+
+    if (!created) {
+      return {
+        id: igUserId,
+        igUserId,
+        username: username ?? null,
+        displayName: displayName ?? null,
+        tags: [],
+        score: 0,
+        firstSeenAt: now,
+        lastMessageAt: now,
+      };
+    }
+    return rowToContact(created);
   }
 
   async updateLastMessageAt(igUserId: string): Promise<void> {
     await this.db
       .prepare(
-        "UPDATE contacts SET last_message_at = ? WHERE ig_user_id = ?",
+        "UPDATE contacts SET last_message_at = ? WHERE ig_user_id = ? AND account_id = ?",
       )
-      .bind(new Date().toISOString(), igUserId)
+      .bind(new Date().toISOString(), igUserId, this.accountId)
       .run();
   }
 
   async updateTags(id: string, tags: string[]): Promise<void> {
     await this.db
-      .prepare("UPDATE contacts SET tags = ? WHERE id = ?")
-      .bind(JSON.stringify(tags), id)
+      .prepare("UPDATE contacts SET tags = ? WHERE id = ? AND account_id = ?")
+      .bind(JSON.stringify(tags), id, this.accountId)
       .run();
   }
 
   /** コンタクトのスコアを加算 */
   async addScore(contactId: string, points: number): Promise<void> {
     await this.db
-      .prepare("UPDATE contacts SET score = score + ? WHERE id = ?")
-      .bind(points, contactId)
+      .prepare("UPDATE contacts SET score = score + ? WHERE id = ? AND account_id = ?")
+      .bind(points, contactId, this.accountId)
       .run();
   }
 
   /** コンタクトのスコアを取得 */
   async getScore(contactId: string): Promise<number> {
     const row = await this.db
-      .prepare("SELECT score FROM contacts WHERE id = ?")
-      .bind(contactId)
+      .prepare("SELECT score FROM contacts WHERE id = ? AND account_id = ?")
+      .bind(contactId, this.accountId)
       .first<{ score: number }>();
     return row?.score ?? 0;
   }
