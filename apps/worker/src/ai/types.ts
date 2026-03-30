@@ -1,9 +1,8 @@
 /**
  * AI自動応答 ドメイン型定義
  *
- * ⚠️ SECURITY NOTE:
- * apiKey フィールドはDBに平文保存される。本番環境では環境変数 AI_API_KEY を第一優先で使用すること。
- * DBにAPIキーを保存する必要がある場合は Cloudflare Workers の暗号化機能（Secrets）を検討すること。
+ * SECURITY: API key は環境変数 AI_API_KEY (Cloudflare Secret) から取得する。
+ * D1 には API key を保存しない。
  */
 import { z } from "zod";
 

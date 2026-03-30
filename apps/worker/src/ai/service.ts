@@ -3,8 +3,8 @@
  *
  * fetchで直接API呼び出し（SDK不使用 — Workers互換性のため）
  *
- * ⚠️ SECURITY: 環境変数 AI_API_KEY を第一優先で使用。
- * DB保存のキーは非推奨（平文保存のため）。
+ * SECURITY: API key は環境変数 AI_API_KEY (Cloudflare Secret) から取得。
+ * D1 には API key を保存しない。
  */
 import { z } from "zod";
 import { structuredLog } from "@slidein/shared";
@@ -53,7 +53,7 @@ export class AIService {
   private readonly aiApiKey: string | undefined;
 
   constructor(deps: AIServiceDeps) {
-    this.repo = new AIConfigRepository(deps.db);
+    this.repo = new AIConfigRepository(deps.db, deps.aiApiKey);
     this.aiApiKey = deps.aiApiKey;
   }
 
