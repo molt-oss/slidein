@@ -11,8 +11,8 @@ const MAX_REGEX_LENGTH = 100;
 export class KeywordMatchService {
   private readonly repo: KeywordRuleRepository;
 
-  constructor(db: D1Database) {
-    this.repo = new KeywordRuleRepository(db);
+  constructor(db: D1Database, accountId: string = 'default') {
+    this.repo = new KeywordRuleRepository(db, accountId);
   }
 
   /** メッセージテキストにマッチするルールを検索 */

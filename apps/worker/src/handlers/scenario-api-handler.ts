@@ -11,24 +11,26 @@ import {
   EnrollContactSchema,
 } from "../scenarios/types.js";
 import { bearerAuth } from "../middleware/auth.js";
+import { getAccountIdFromRequest } from "../accounts/http.js";
 
 const scenarioApi = new Hono<{ Bindings: Env }>();
 
 // --- Bearer Token 認証ミドルウェア (timing-safe) ---
 scenarioApi.use("/api/*", bearerAuth());
 
-function createService(env: Env): ScenarioService {
+function createService(env: Env, accountId: string): ScenarioService {
   return new ScenarioService({
     db: env.DB,
     accessToken: env.META_ACCESS_TOKEN,
     igAccountId: env.IG_ACCOUNT_ID,
+    accountId,
   });
 }
 
 // --- Scenarios CRUD ---
 
 scenarioApi.get("/api/scenarios", async (c) => {
-  const service = createService(c.env);
+  const service = createService(c.env, getAccountIdFromRequest(c));
   const scenarios = await service.listAll();
   return c.json({ data: scenarios });
 });
@@ -41,7 +43,7 @@ scenarioApi.post("/api/scenarios", async (c) => {
     return c.json({ error: parseResult.error.flatten() }, 400);
   }
 
-  const service = createService(c.env);
+  const service = createService(c.env, getAccountIdFromRequest(c));
   const scenario = await service.create(parseResult.data);
 
   structuredLog("info", "Scenario created via API", {
@@ -52,7 +54,7 @@ scenarioApi.post("/api/scenarios", async (c) => {
 
 scenarioApi.get("/api/scenarios/:id", async (c) => {
   const id = c.req.param("id");
-  const service = createService(c.env);
+  const service = createService(c.env, getAccountIdFromRequest(c));
   const scenario = await service.getById(id);
 
   if (!scenario) {
@@ -70,7 +72,7 @@ scenarioApi.put("/api/scenarios/:id", async (c) => {
     return c.json({ error: parseResult.error.flatten() }, 400);
   }
 
-  const service = createService(c.env);
+  const service = createService(c.env, getAccountIdFromRequest(c));
   const updated = await service.update(id, parseResult.data);
 
   if (!updated) {
@@ -83,7 +85,7 @@ scenarioApi.put("/api/scenarios/:id", async (c) => {
 
 scenarioApi.delete("/api/scenarios/:id", async (c) => {
   const id = c.req.param("id");
-  const service = createService(c.env);
+  const service = createService(c.env, getAccountIdFromRequest(c));
   const deleted = await service.delete(id);
 
   if (!deleted) {
@@ -105,7 +107,7 @@ scenarioApi.post("/api/scenarios/:id/enroll", async (c) => {
     return c.json({ error: parseResult.error.flatten() }, 400);
   }
 
-  const service = createService(c.env);
+  const service = createService(c.env, getAccountIdFromRequest(c));
   try {
     const enrollment = await service.enrollContact(
       parseResult.data.contactId,
@@ -124,7 +126,7 @@ scenarioApi.post("/api/scenarios/:id/enroll", async (c) => {
 
 scenarioApi.get("/api/scenarios/:id/enrollments", async (c) => {
   const scenarioId = c.req.param("id");
-  const service = createService(c.env);
+  const service = createService(c.env, getAccountIdFromRequest(c));
   const enrollments = await service.listEnrollments(scenarioId);
   return c.json({ data: enrollments });
 });

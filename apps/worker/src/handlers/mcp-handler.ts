@@ -6,6 +6,7 @@ import { structuredLog } from "@slidein/shared";
 import type { Env } from "../config/env.js";
 import { MCPServer } from "../mcp/server.js";
 import { bearerAuth } from "../middleware/auth.js";
+import { getAccountIdFromRequest } from "../accounts/http.js";
 
 const mcpHandler = new Hono<{ Bindings: Env }>();
 
@@ -19,6 +20,7 @@ mcpHandler.post("/mcp", async (c) => {
     accessToken: c.env.META_ACCESS_TOKEN,
     igAccountId: c.env.IG_ACCOUNT_ID,
     aiApiKey: c.env.AI_API_KEY,
+    accountId: getAccountIdFromRequest(c),
   });
 
   const response = await server.handleRequest(body);

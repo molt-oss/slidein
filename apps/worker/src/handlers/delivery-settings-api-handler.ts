@@ -7,6 +7,7 @@ import { structuredLog } from "@slidein/shared";
 import type { Env } from "../config/env.js";
 import { DeliverySettingsRepository } from "../messaging/delivery-settings-repository.js";
 import { bearerAuth } from "../middleware/auth.js";
+import { getAccountIdFromRequest } from "../accounts/http.js";
 
 const deliverySettingsApi = new Hono<{ Bindings: Env }>();
 
@@ -19,7 +20,7 @@ const UpdateDeliverySettingsSchema = z.object({
 });
 
 deliverySettingsApi.get("/api/delivery-settings", async (c) => {
-  const repo = new DeliverySettingsRepository(c.env.DB);
+  const repo = new DeliverySettingsRepository(c.env.DB, getAccountIdFromRequest(c));
   const settings = await repo.get();
   return c.json({ data: settings });
 });
@@ -37,7 +38,7 @@ deliverySettingsApi.put("/api/delivery-settings", async (c) => {
     return c.json({ error: "startHour must be less than endHour" }, 400);
   }
 
-  const repo = new DeliverySettingsRepository(c.env.DB);
+  const repo = new DeliverySettingsRepository(c.env.DB, getAccountIdFromRequest(c));
   const updated = await repo.update(startHour, endHour, timezone);
 
   structuredLog("info", "Delivery settings updated", {

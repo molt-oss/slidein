@@ -8,8 +8,8 @@ import { CommentTriggerRepository } from "./comment-trigger-repository.js";
 export class CommentTriggerService {
   private readonly repo: CommentTriggerRepository;
 
-  constructor(db: D1Database) {
-    this.repo = new CommentTriggerRepository(db);
+  constructor(db: D1Database, accountId: string = 'default') {
+    this.repo = new CommentTriggerRepository(db, accountId);
   }
 
   /** コメントイベントにマッチするトリガーを検索 */

@@ -23,6 +23,7 @@ interface AutomationServiceDeps {
   db: D1Database;
   accessToken: string;
   igAccountId: string;
+  accountId?: string;
 }
 
 interface EventContext {
@@ -42,11 +43,12 @@ export class AutomationService {
 
   constructor(deps: AutomationServiceDeps) {
     this.deps = deps;
-    this.repo = new AutomationRuleRepository(deps.db);
-    this.contactService = new ContactService(deps.db);
-    this.contactRepo = new ContactRepository(deps.db);
-    this.messageRepo = new MessageRepository(deps.db);
-    this.pendingRepo = new PendingMessageRepository(deps.db);
+    const accountId = deps.accountId ?? 'default';
+    this.repo = new AutomationRuleRepository(deps.db, accountId);
+    this.contactService = new ContactService(deps.db, accountId);
+    this.contactRepo = new ContactRepository(deps.db, accountId);
+    this.messageRepo = new MessageRepository(deps.db, accountId);
+    this.pendingRepo = new PendingMessageRepository(deps.db, accountId);
   }
 
   async listAll(): Promise<AutomationRule[]> {
@@ -164,7 +166,7 @@ export class AutomationService {
         break;
       case "record_conversion":
         if (action.goalId) {
-          const conversionService = new ConversionService(this.deps.db);
+          const conversionService = new ConversionService(this.deps.db, this.deps.accountId);
           await conversionService.recordConversion(action.goalId, contactId);
         }
         break;

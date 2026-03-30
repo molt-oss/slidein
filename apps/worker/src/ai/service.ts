@@ -46,6 +46,7 @@ const OpenAIResponseSchema = z.object({
 interface AIServiceDeps {
   db: D1Database;
   aiApiKey?: string;
+  accountId?: string;
 }
 
 export class AIService {
@@ -53,7 +54,7 @@ export class AIService {
   private readonly aiApiKey: string | undefined;
 
   constructor(deps: AIServiceDeps) {
-    this.repo = new AIConfigRepository(deps.db, deps.aiApiKey);
+    this.repo = new AIConfigRepository(deps.db, deps.aiApiKey, deps.accountId ?? 'default');
     this.aiApiKey = deps.aiApiKey;
   }
 

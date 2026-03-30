@@ -8,8 +8,8 @@ import { ContactRepository } from "./repository.js";
 export class ContactService {
   private readonly repo: ContactRepository;
 
-  constructor(db: D1Database) {
-    this.repo = new ContactRepository(db);
+  constructor(db: D1Database, accountId: string = 'default') {
+    this.repo = new ContactRepository(db, accountId);
   }
 
   /** コンタクトを取得。存在しなければ新規作成 */

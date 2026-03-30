@@ -12,6 +12,7 @@ import {
   CreateCommentTriggerSchema,
 } from "../triggers/types.js";
 import { bearerAuth } from "../middleware/auth.js";
+import { getAccountIdFromRequest } from "../accounts/http.js";
 
 const api = new Hono<{ Bindings: Env }>();
 
@@ -21,7 +22,7 @@ api.use("/api/*", bearerAuth());
 // --- Contacts ---
 
 api.get("/api/contacts", async (c) => {
-  const service = new ContactService(c.env.DB);
+  const service = new ContactService(c.env.DB, getAccountIdFromRequest(c));
   const contacts = await service.listAll();
   return c.json({ data: contacts });
 });
@@ -29,7 +30,7 @@ api.get("/api/contacts", async (c) => {
 // --- Keyword Rules ---
 
 api.get("/api/keyword-rules", async (c) => {
-  const service = new KeywordMatchService(c.env.DB);
+  const service = new KeywordMatchService(c.env.DB, getAccountIdFromRequest(c));
   const rules = await service.listAll();
   return c.json({ data: rules });
 });
@@ -43,7 +44,7 @@ api.post("/api/keyword-rules", async (c) => {
   }
 
   const { keyword, matchType, responseText } = parseResult.data;
-  const service = new KeywordMatchService(c.env.DB);
+  const service = new KeywordMatchService(c.env.DB, getAccountIdFromRequest(c));
   const rule = await service.create(keyword, matchType, responseText);
 
   structuredLog("info", "Keyword rule created", { ruleId: rule.id });
@@ -52,7 +53,7 @@ api.post("/api/keyword-rules", async (c) => {
 
 api.delete("/api/keyword-rules/:id", async (c) => {
   const id = c.req.param("id");
-  const service = new KeywordMatchService(c.env.DB);
+  const service = new KeywordMatchService(c.env.DB, getAccountIdFromRequest(c));
   const deleted = await service.delete(id);
 
   if (!deleted) {
@@ -66,7 +67,7 @@ api.delete("/api/keyword-rules/:id", async (c) => {
 // --- Comment Triggers ---
 
 api.get("/api/comment-triggers", async (c) => {
-  const service = new CommentTriggerService(c.env.DB);
+  const service = new CommentTriggerService(c.env.DB, getAccountIdFromRequest(c));
   const triggers = await service.listAll();
   return c.json({ data: triggers });
 });
@@ -80,7 +81,7 @@ api.post("/api/comment-triggers", async (c) => {
   }
 
   const { dmResponseText, mediaIdFilter, keywordFilter } = parseResult.data;
-  const service = new CommentTriggerService(c.env.DB);
+  const service = new CommentTriggerService(c.env.DB, getAccountIdFromRequest(c));
   const trigger = await service.create(
     dmResponseText,
     mediaIdFilter,
@@ -93,7 +94,7 @@ api.post("/api/comment-triggers", async (c) => {
 
 api.delete("/api/comment-triggers/:id", async (c) => {
   const id = c.req.param("id");
-  const service = new CommentTriggerService(c.env.DB);
+  const service = new CommentTriggerService(c.env.DB, getAccountIdFromRequest(c));
   const deleted = await service.delete(id);
 
   if (!deleted) {

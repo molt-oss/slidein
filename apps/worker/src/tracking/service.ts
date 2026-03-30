@@ -11,6 +11,7 @@ interface TrackingServiceDeps {
   db: D1Database;
   accessToken: string;
   igAccountId: string;
+  accountId?: string;
 }
 
 export class TrackingService {
@@ -21,9 +22,10 @@ export class TrackingService {
 
   constructor(deps: TrackingServiceDeps) {
     this.deps = deps;
-    this.repo = new TrackedLinkRepository(deps.db);
-    this.contactService = new ContactService(deps.db);
-    this.scoringService = new ScoringService(deps.db);
+    const accountId = deps.accountId ?? 'default';
+    this.repo = new TrackedLinkRepository(deps.db, accountId);
+    this.contactService = new ContactService(deps.db, accountId);
+    this.scoringService = new ScoringService(deps.db, accountId);
   }
 
   async listAll(): Promise<TrackedLink[]> {

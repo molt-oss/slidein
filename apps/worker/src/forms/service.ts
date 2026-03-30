@@ -11,6 +11,7 @@ interface FormServiceDeps {
   db: D1Database;
   accessToken: string;
   igAccountId: string;
+  accountId?: string;
 }
 
 export class FormService {
@@ -21,9 +22,10 @@ export class FormService {
 
   constructor(deps: FormServiceDeps) {
     this.deps = deps;
-    this.formRepo = new FormRepository(deps.db);
-    this.responseRepo = new FormResponseRepository(deps.db);
-    this.contactRepo = new ContactRepository(deps.db);
+    const accountId = deps.accountId ?? 'default';
+    this.formRepo = new FormRepository(deps.db, accountId);
+    this.responseRepo = new FormResponseRepository(deps.db, accountId);
+    this.contactRepo = new ContactRepository(deps.db, accountId);
   }
 
   async listForms(): Promise<Form[]> {

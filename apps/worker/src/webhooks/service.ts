@@ -14,8 +14,8 @@ import type {
 export class WebhookService {
   private readonly repo: WebhookEndpointRepository;
 
-  constructor(db: D1Database) {
-    this.repo = new WebhookEndpointRepository(db);
+  constructor(db: D1Database, accountId: string = 'default') {
+    this.repo = new WebhookEndpointRepository(db, accountId);
   }
 
   async listAll(): Promise<WebhookEndpoint[]> {

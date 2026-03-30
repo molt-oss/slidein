@@ -22,6 +22,7 @@ interface MessageServiceDeps {
   accessToken: string;
   igAccountId: string;
   aiApiKey?: string;
+  accountId?: string;
 }
 
 export class MessageService {
@@ -37,14 +38,15 @@ export class MessageService {
 
   constructor(deps: MessageServiceDeps) {
     this.deps = deps;
-    this.repo = new MessageRepository(deps.db);
-    this.pendingRepo = new PendingMessageRepository(deps.db);
-    this.contactService = new ContactService(deps.db);
-    this.keywordMatchService = new KeywordMatchService(deps.db);
-    this.scenarioTriggerService = new ScenarioTriggerService(deps);
-    this.scoringService = new ScoringService(deps.db);
-    this.automationService = new AutomationService(deps);
-    this.aiService = new AIService({ db: deps.db, aiApiKey: deps.aiApiKey });
+    const accountId = deps.accountId ?? 'default';
+    this.repo = new MessageRepository(deps.db, accountId);
+    this.pendingRepo = new PendingMessageRepository(deps.db, accountId);
+    this.contactService = new ContactService(deps.db, accountId);
+    this.keywordMatchService = new KeywordMatchService(deps.db, accountId);
+    this.scenarioTriggerService = new ScenarioTriggerService({ ...deps, accountId });
+    this.scoringService = new ScoringService(deps.db, accountId);
+    this.automationService = new AutomationService({ ...deps, accountId });
+    this.aiService = new AIService({ db: deps.db, aiApiKey: deps.aiApiKey, accountId });
   }
 
   /** 受信メッセージ処理: ログ保存 + キーワードマッチ → 自動返信 */

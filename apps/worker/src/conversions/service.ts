@@ -15,10 +15,10 @@ export class ConversionService {
   private readonly conversionRepo: ConversionRepository;
   private readonly contactRepo: ContactRepository;
 
-  constructor(db: D1Database) {
-    this.goalRepo = new ConversionGoalRepository(db);
-    this.conversionRepo = new ConversionRepository(db);
-    this.contactRepo = new ContactRepository(db);
+  constructor(db: D1Database, accountId: string = 'default') {
+    this.goalRepo = new ConversionGoalRepository(db, accountId);
+    this.conversionRepo = new ConversionRepository(db, accountId);
+    this.contactRepo = new ContactRepository(db, accountId);
   }
 
   async listGoals(): Promise<ConversionGoal[]> {

@@ -20,6 +20,7 @@ interface MCPServerDeps {
   accessToken: string;
   igAccountId: string;
   aiApiKey?: string;
+  accountId?: string;
 }
 
 export class MCPServer {

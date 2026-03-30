@@ -7,21 +7,23 @@ import type { Env } from "../config/env.js";
 import { BroadcastService } from "../broadcasts/service.js";
 import { CreateBroadcastSchema } from "../broadcasts/types.js";
 import { bearerAuth } from "../middleware/auth.js";
+import { getAccountIdFromRequest } from "../accounts/http.js";
 
 const broadcastApi = new Hono<{ Bindings: Env }>();
 
 broadcastApi.use("/api/*", bearerAuth());
 
-function createService(env: Env): BroadcastService {
+function createService(env: Env, accountId: string): BroadcastService {
   return new BroadcastService({
     db: env.DB,
     accessToken: env.META_ACCESS_TOKEN,
     igAccountId: env.IG_ACCOUNT_ID,
+    accountId,
   });
 }
 
 broadcastApi.get("/api/broadcasts", async (c) => {
-  const service = createService(c.env);
+  const service = createService(c.env, getAccountIdFromRequest(c));
   const broadcasts = await service.listAll();
   return c.json({ data: broadcasts });
 });
@@ -34,7 +36,7 @@ broadcastApi.post("/api/broadcasts", async (c) => {
     return c.json({ error: parseResult.error.flatten() }, 400);
   }
 
-  const service = createService(c.env);
+  const service = createService(c.env, getAccountIdFromRequest(c));
   const broadcast = await service.create(parseResult.data);
 
   structuredLog("info", "Broadcast created via API", {
@@ -45,7 +47,7 @@ broadcastApi.post("/api/broadcasts", async (c) => {
 
 broadcastApi.post("/api/broadcasts/:id/send", async (c) => {
   const id = c.req.param("id");
-  const service = createService(c.env);
+  const service = createService(c.env, getAccountIdFromRequest(c));
 
   try {
     await service.send(id);
@@ -58,7 +60,7 @@ broadcastApi.post("/api/broadcasts/:id/send", async (c) => {
 
 broadcastApi.delete("/api/broadcasts/:id", async (c) => {
   const id = c.req.param("id");
-  const service = createService(c.env);
+  const service = createService(c.env, getAccountIdFromRequest(c));
   const deleted = await service.delete(id);
 
   if (!deleted) {

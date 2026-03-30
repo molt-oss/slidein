@@ -7,13 +7,14 @@ import type { Env } from "../config/env.js";
 import { ScoringService } from "../scoring/service.js";
 import { CreateScoringRuleSchema } from "../scoring/types.js";
 import { bearerAuth } from "../middleware/auth.js";
+import { getAccountIdFromRequest } from "../accounts/http.js";
 
 const scoringApi = new Hono<{ Bindings: Env }>();
 
 scoringApi.use("/api/*", bearerAuth());
 
 scoringApi.get("/api/scoring-rules", async (c) => {
-  const service = new ScoringService(c.env.DB);
+  const service = new ScoringService(c.env.DB, getAccountIdFromRequest(c));
   const rules = await service.listRules();
   return c.json({ data: rules });
 });
@@ -26,7 +27,7 @@ scoringApi.post("/api/scoring-rules", async (c) => {
     return c.json({ error: parseResult.error.flatten() }, 400);
   }
 
-  const service = new ScoringService(c.env.DB);
+  const service = new ScoringService(c.env.DB, getAccountIdFromRequest(c));
   const rule = await service.createRule(parseResult.data);
 
   structuredLog("info", "Scoring rule created via API", { ruleId: rule.id });
@@ -35,7 +36,7 @@ scoringApi.post("/api/scoring-rules", async (c) => {
 
 scoringApi.delete("/api/scoring-rules/:id", async (c) => {
   const id = c.req.param("id");
-  const service = new ScoringService(c.env.DB);
+  const service = new ScoringService(c.env.DB, getAccountIdFromRequest(c));
   const deleted = await service.deleteRule(id);
 
   if (!deleted) {
@@ -48,7 +49,7 @@ scoringApi.delete("/api/scoring-rules/:id", async (c) => {
 
 scoringApi.get("/api/contacts/:id/score", async (c) => {
   const id = c.req.param("id");
-  const service = new ScoringService(c.env.DB);
+  const service = new ScoringService(c.env.DB, getAccountIdFromRequest(c));
   const score = await service.getScore(id);
   return c.json({ data: { contactId: id, score } });
 });

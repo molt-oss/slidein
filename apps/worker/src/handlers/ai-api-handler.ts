@@ -7,13 +7,14 @@ import type { Env } from "../config/env.js";
 import { AIService } from "../ai/service.js";
 import { UpdateAIConfigSchema } from "../ai/types.js";
 import { bearerAuth } from "../middleware/auth.js";
+import { getAccountIdFromRequest } from "../accounts/http.js";
 
 const aiApi = new Hono<{ Bindings: Env }>();
 
 aiApi.use("/api/*", bearerAuth());
 
 aiApi.get("/api/ai-config", async (c) => {
-  const service = new AIService({ db: c.env.DB, aiApiKey: c.env.AI_API_KEY });
+  const service = new AIService({ db: c.env.DB, aiApiKey: c.env.AI_API_KEY, accountId: getAccountIdFromRequest(c) });
   const config = await service.getConfig();
 
   if (!config) {
@@ -32,7 +33,7 @@ aiApi.put("/api/ai-config", async (c) => {
     return c.json({ error: parseResult.error.flatten() }, 400);
   }
 
-  const service = new AIService({ db: c.env.DB, aiApiKey: c.env.AI_API_KEY });
+  const service = new AIService({ db: c.env.DB, aiApiKey: c.env.AI_API_KEY, accountId: getAccountIdFromRequest(c) });
   // SF-7: updateConfig() は既にマスク済みの config を返す（repository.update がマスク済み）
   const config = await service.updateConfig(parseResult.data);
 

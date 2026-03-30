@@ -14,7 +14,7 @@ function rowToAIConfig(row: AIConfigRow, envApiKey?: string): AIConfig {
     id: row.id,
     enabled: row.enabled === 1,
     provider: row.provider,
-    apiKey: envApiKey ?? null, // API key comes from env, not DB
+    apiKey: envApiKey ?? null,
     model: row.model,
     systemPrompt: row.system_prompt,
     knowledgeBase: row.knowledge_base,
@@ -23,7 +23,6 @@ function rowToAIConfig(row: AIConfigRow, envApiKey?: string): AIConfig {
   };
 }
 
-/** APIキーをマスクした安全なコピーを返す */
 function toSafeConfig(config: AIConfig): AIConfig {
   return { ...config, apiKey: maskApiKey(config.apiKey) };
 }
@@ -32,17 +31,17 @@ export class AIConfigRepository {
   constructor(
     private readonly db: D1Database,
     private readonly envApiKey?: string,
+    private readonly accountId: string = "default",
   ) {}
 
-  /** 内部用: env API key を含む生データを返す */
   async getInternal(): Promise<AIConfig | null> {
     const row = await this.db
-      .prepare("SELECT * FROM ai_config WHERE id = 'default'")
+      .prepare("SELECT * FROM ai_config WHERE account_id = ? LIMIT 1")
+      .bind(this.accountId)
       .first<AIConfigRow>();
     return row ? rowToAIConfig(row, this.envApiKey) : null;
   }
 
-  /** 外部公開用: APIキーをマスクして返す */
   async get(): Promise<AIConfig | null> {
     const config = await this.getInternal();
     return config ? toSafeConfig(config) : null;
@@ -65,7 +64,6 @@ export class AIConfigRepository {
       fields.push("provider = ?");
       values.push(input.provider);
     }
-    // apiKey is no longer stored in D1 — managed via env secret AI_API_KEY
     if (input.model !== undefined) {
       fields.push("model = ?");
       values.push(input.model);
@@ -87,11 +85,9 @@ export class AIConfigRepository {
       return toSafeConfig(current);
     }
 
-    values.push("default");
+    values.push(this.accountId);
     await this.db
-      .prepare(
-        `UPDATE ai_config SET ${fields.join(", ")} WHERE id = ?`,
-      )
+      .prepare(`UPDATE ai_config SET ${fields.join(", ")} WHERE account_id = ?`)
       .bind(...values)
       .run();
 

@@ -11,8 +11,32 @@ import {
 import type { Env } from "../config/env.js";
 import { MessageService } from "../messaging/service.js";
 import { CommentTriggerService } from "../triggers/comment-trigger-service.js";
+import { AccountService } from "../accounts/service.js";
+import type { AccountCredentials } from "../accounts/types.js";
 
 const webhook = new Hono<{ Bindings: Env }>();
+
+function extractRecipientIgAccountId(payload: unknown): string | undefined {
+  if (!payload || typeof payload !== "object") return undefined;
+  const entry = (payload as { entry?: unknown }).entry;
+  if (!Array.isArray(entry)) return undefined;
+
+  for (const item of entry) {
+    if (!item || typeof item !== "object") continue;
+    const messaging = (item as { messaging?: unknown }).messaging;
+    if (!Array.isArray(messaging)) continue;
+
+    for (const event of messaging) {
+      if (!event || typeof event !== "object") continue;
+      const recipient = (event as { recipient?: unknown }).recipient;
+      if (!recipient || typeof recipient !== "object") continue;
+      const id = (recipient as { id?: unknown }).id;
+      if (typeof id === "string" && id.length > 0) return id;
+    }
+  }
+
+  return undefined;
+}
 
 /** GET /webhook — Meta Webhook 検証 (challenge-response) */
 webhook.get("/webhook", (c) => {
@@ -39,18 +63,6 @@ webhook.post("/webhook", async (c) => {
 
   const rawBody = await c.req.text();
 
-  // 署名検証
-  const isValid = await verifyWebhookSignature(
-    rawBody,
-    signature,
-    c.env.META_APP_SECRET,
-  );
-  if (!isValid) {
-    structuredLog("warn", "Invalid webhook signature");
-    return c.text("Unauthorized", 401);
-  }
-
-  // ペイロードパース
   let parsed: unknown;
   try {
     parsed = JSON.parse(rawBody);
@@ -61,12 +73,33 @@ webhook.post("/webhook", async (c) => {
     return c.text("Bad Request", 400);
   }
 
-  // 受信ペイロードのメタデータのみログ出力
+  const accountService = new AccountService(c.env.DB);
+  const recipientIgAccountId = extractRecipientIgAccountId(parsed);
+  const credentials = await accountService.resolveByRecipientIgAccountId(
+    recipientIgAccountId,
+    c.env,
+  );
+
+  const isValid = await verifyWebhookSignature(
+    rawBody,
+    signature,
+    credentials.appSecret,
+  );
+  if (!isValid) {
+    structuredLog("warn", "Invalid webhook signature", {
+      recipientIgAccountId,
+      accountId: credentials.accountId,
+    });
+    return c.text("Unauthorized", 401);
+  }
+
   structuredLog("info", "Webhook payload received", {
     objectType: (parsed as Record<string, unknown>).object,
     entryCount: Array.isArray((parsed as Record<string, unknown>).entry)
       ? ((parsed as Record<string, unknown>).entry as unknown[]).length
       : 0,
+    recipientIgAccountId,
+    accountId: credentials.accountId,
   });
 
   const parseResult = WebhookPayloadSchema.safeParse(parsed);
@@ -80,8 +113,7 @@ webhook.post("/webhook", async (c) => {
 
   const payload = parseResult.data;
 
-  // 5秒以内に200を返す必要があるので、処理はwaitUntilで非同期実行
-  c.executionCtx.waitUntil(processWebhookPayload(c.env, payload));
+  c.executionCtx.waitUntil(processWebhookPayload(c.env, payload, credentials));
 
   return c.text("OK", 200);
 });
@@ -90,18 +122,22 @@ webhook.post("/webhook", async (c) => {
 async function processWebhookPayload(
   env: Env,
   payload: WebhookPayload,
+  credentials: AccountCredentials,
 ): Promise<void> {
   const messageService = new MessageService({
     db: env.DB,
-    accessToken: env.META_ACCESS_TOKEN,
-    igAccountId: env.IG_ACCOUNT_ID,
+    accessToken: credentials.accessToken,
+    igAccountId: credentials.igAccountId,
     aiApiKey: env.AI_API_KEY,
+    accountId: credentials.accountId,
   });
 
-  const commentTriggerService = new CommentTriggerService(env.DB);
+  const commentTriggerService = new CommentTriggerService(
+    env.DB,
+    credentials.accountId,
+  );
 
   for (const entry of payload.entry) {
-    // DM メッセージ処理
     if (entry.messaging) {
       for (const event of entry.messaging) {
         if (event.message?.text) {
@@ -114,7 +150,6 @@ async function processWebhookPayload(
       }
     }
 
-    // コメントイベント処理
     if (entry.changes) {
       for (const change of entry.changes) {
         if (change.field === "comments") {

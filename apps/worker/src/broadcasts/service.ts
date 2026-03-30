@@ -17,6 +17,7 @@ interface BroadcastServiceDeps {
   db: D1Database;
   accessToken: string;
   igAccountId: string;
+  accountId?: string;
 }
 
 export class BroadcastService {
@@ -28,10 +29,11 @@ export class BroadcastService {
 
   constructor(deps: BroadcastServiceDeps) {
     this.deps = deps;
-    this.repo = new BroadcastRepository(deps.db);
-    this.contactRepo = new ContactRepository(deps.db);
-    this.pendingRepo = new PendingMessageRepository(deps.db);
-    this.messageRepo = new MessageRepository(deps.db);
+    const accountId = deps.accountId ?? 'default';
+    this.repo = new BroadcastRepository(deps.db, accountId);
+    this.contactRepo = new ContactRepository(deps.db, accountId);
+    this.pendingRepo = new PendingMessageRepository(deps.db, accountId);
+    this.messageRepo = new MessageRepository(deps.db, accountId);
   }
 
   async listAll(): Promise<Broadcast[]> {

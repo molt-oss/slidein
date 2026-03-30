@@ -22,6 +22,7 @@ interface ScenarioServiceDeps {
   db: D1Database;
   accessToken: string;
   igAccountId: string;
+  accountId?: string;
 }
 
 export class ScenarioService {
@@ -34,11 +35,12 @@ export class ScenarioService {
 
   constructor(deps: ScenarioServiceDeps) {
     this.deps = deps;
-    this.scenarioRepo = new ScenarioRepository(deps.db);
-    this.enrollmentRepo = new EnrollmentRepository(deps.db);
-    this.contactRepo = new ContactRepository(deps.db);
-    this.messageRepo = new MessageRepository(deps.db);
-    this.pendingRepo = new PendingMessageRepository(deps.db);
+    const accountId = deps.accountId ?? 'default';
+    this.scenarioRepo = new ScenarioRepository(deps.db, accountId);
+    this.enrollmentRepo = new EnrollmentRepository(deps.db, accountId);
+    this.contactRepo = new ContactRepository(deps.db, accountId);
+    this.messageRepo = new MessageRepository(deps.db, accountId);
+    this.pendingRepo = new PendingMessageRepository(deps.db, accountId);
   }
 
   async listAll(): Promise<ScenarioWithSteps[]> {

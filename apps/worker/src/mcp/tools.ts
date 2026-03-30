@@ -15,6 +15,7 @@ import { AutomationService } from "../automations/service.js";
 import { TrackingService } from "../tracking/service.js";
 import { FormService } from "../forms/service.js";
 import { AIService } from "../ai/service.js";
+import { AccountService } from "../accounts/service.js";
 
 export type MCPScope = "read" | "readwrite";
 
@@ -23,11 +24,11 @@ interface MCPDeps {
   accessToken: string;
   igAccountId: string;
   aiApiKey?: string;
+  accountId?: string;
 }
 
 type ToolHandler = (params: Record<string, unknown>) => Promise<unknown>;
 
-/** read系ツール名の集合 */
 const READ_TOOLS = new Set([
   "contacts_list",
   "contacts_get",
@@ -40,9 +41,9 @@ const READ_TOOLS = new Set([
   "tracked_links_list",
   "forms_list",
   "ai_config_get",
+  "accounts_list",
 ]);
 
-/** write系ツール名の集合 */
 const WRITE_TOOLS = new Set([
   "keyword_rules_create",
   "keyword_rules_delete",
@@ -57,7 +58,38 @@ const WRITE_TOOLS = new Set([
   "tracked_links_create",
   "forms_create",
   "ai_config_update",
+  "accounts_create",
+  "accounts_update",
+  "accounts_delete",
 ]);
+
+function getAccountId(params: Record<string, unknown>, fallback = "default"): string {
+  const accountId = params.accountId;
+  return typeof accountId === "string" && accountId.length > 0 ? accountId : fallback;
+}
+
+function withAccountId(
+  schema: MCPToolDefinition["inputSchema"],
+  includeInRequired = false,
+): MCPToolDefinition["inputSchema"] {
+  const required = schema.required ? [...schema.required] : [];
+  if (includeInRequired && !required.includes("accountId")) {
+    required.push("accountId");
+  }
+
+  return {
+    ...schema,
+    properties: {
+      ...schema.properties,
+      accountId: {
+        type: "string",
+        description: "Target account ID",
+        default: "default",
+      },
+    },
+    ...(required.length > 0 ? { required } : {}),
+  };
+}
 
 export function isWriteTool(toolName: string): boolean {
   return WRITE_TOOLS.has(toolName);
@@ -71,70 +103,85 @@ export function getToolDefinitions(scope: MCPScope = "readwrite"): MCPToolDefini
 }
 
 export function createToolHandlers(deps: MCPDeps): Record<string, ToolHandler> {
-  const contactService = new ContactService(deps.db);
-  const contactRepo = new ContactRepository(deps.db);
-  const keywordService = new KeywordMatchService(deps.db);
-  const commentTriggerService = new CommentTriggerService(deps.db);
-  const scenarioService = new ScenarioService(deps);
-  const broadcastService = new BroadcastService(deps);
-  const scoringService = new ScoringService(deps.db);
-  const automationService = new AutomationService(deps);
-  const trackingService = new TrackingService(deps);
-  const formService = new FormService(deps);
-  const aiService = new AIService({ db: deps.db, aiApiKey: deps.aiApiKey });
+  const baseAccountId = deps.accountId ?? "default";
+
+  const buildDeps = (params: Record<string, unknown>) => ({
+    ...deps,
+    accountId: getAccountId(params, baseAccountId),
+  });
 
   return {
-    // --- Read tools ---
-    contacts_list: async () => contactService.listAll(),
-    contacts_get: async (p) => contactRepo.findById(p.id as string),
+    contacts_list: async (p) => new ContactService(deps.db, getAccountId(p, baseAccountId)).listAll(),
+    contacts_get: async (p) => new ContactRepository(deps.db, getAccountId(p, baseAccountId)).findById(p.id as string),
 
-    keyword_rules_list: async () => keywordService.listAll(),
-    comment_triggers_list: async () => commentTriggerService.listAll(),
-    scenarios_list: async () => scenarioService.listAll(),
-    broadcasts_list: async () => broadcastService.listAll(),
-    scoring_rules_list: async () => scoringService.listRules(),
-    automations_list: async () => automationService.listAll(),
-    tracked_links_list: async () => trackingService.listAll(),
-    forms_list: async () => formService.listForms(),
-    ai_config_get: async () => aiService.getConfig(),
+    keyword_rules_list: async (p) => new KeywordMatchService(deps.db, getAccountId(p, baseAccountId)).listAll(),
+    comment_triggers_list: async (p) => new CommentTriggerService(deps.db, getAccountId(p, baseAccountId)).listAll(),
+    scenarios_list: async (p) => new ScenarioService(buildDeps(p)).listAll(),
+    broadcasts_list: async (p) => new BroadcastService(buildDeps(p)).listAll(),
+    scoring_rules_list: async (p) => new ScoringService(deps.db, getAccountId(p, baseAccountId)).listRules(),
+    automations_list: async (p) => new AutomationService(buildDeps(p)).listAll(),
+    tracked_links_list: async (p) => new TrackingService(buildDeps(p)).listAll(),
+    forms_list: async (p) => new FormService(buildDeps(p)).listForms(),
+    ai_config_get: async (p) => new AIService({ db: deps.db, aiApiKey: deps.aiApiKey, accountId: getAccountId(p, baseAccountId) }).getConfig(),
+    accounts_list: async () => new AccountService(deps.db).listAll(true),
 
-    // --- Write tools ---
     keyword_rules_create: async (p) =>
-      keywordService.create(
+      new KeywordMatchService(deps.db, getAccountId(p, baseAccountId)).create(
         p.keyword as string,
         p.matchType as "exact" | "contains" | "regex",
         p.responseText as string,
       ),
-    keyword_rules_delete: async (p) => keywordService.delete(p.id as string),
+    keyword_rules_delete: async (p) => new KeywordMatchService(deps.db, getAccountId(p, baseAccountId)).delete(p.id as string),
 
     comment_triggers_create: async (p) =>
-      commentTriggerService.create(
+      new CommentTriggerService(deps.db, getAccountId(p, baseAccountId)).create(
         p.dmResponseText as string,
         (p.mediaIdFilter as string) ?? undefined,
         (p.keywordFilter as string) ?? undefined,
       ),
     comment_triggers_delete: async (p) =>
-      commentTriggerService.delete(p.id as string),
+      new CommentTriggerService(deps.db, getAccountId(p, baseAccountId)).delete(p.id as string),
 
-    scenarios_create: async (p) => scenarioService.create(p as never),
-    scenarios_delete: async (p) => scenarioService.delete(p.id as string),
+    scenarios_create: async (p) => new ScenarioService(buildDeps(p)).create(p as never),
+    scenarios_delete: async (p) => new ScenarioService(buildDeps(p)).delete(p.id as string),
 
-    broadcasts_create: async (p) => broadcastService.create(p as never),
-    broadcasts_send: async (p) => broadcastService.send(p.id as string),
+    broadcasts_create: async (p) => new BroadcastService(buildDeps(p)).create(p as never),
+    broadcasts_send: async (p) => new BroadcastService(buildDeps(p)).send(p.id as string),
 
     scoring_rules_create: async (p) =>
-      scoringService.createRule({
+      new ScoringService(deps.db, getAccountId(p, baseAccountId)).createRule({
         eventType: p.eventType as never,
         points: p.points as number,
       }),
 
-    automations_create: async (p) => automationService.create(p as never),
+    automations_create: async (p) => new AutomationService(buildDeps(p)).create(p as never),
 
-    tracked_links_create: async (p) => trackingService.createLink(p as never),
+    tracked_links_create: async (p) => new TrackingService(buildDeps(p)).createLink(p as never),
 
-    forms_create: async (p) => formService.createForm(p as never),
+    forms_create: async (p) => new FormService(buildDeps(p)).createForm(p as never),
 
-    ai_config_update: async (p) => aiService.updateConfig(p as never),
+    ai_config_update: async (p) =>
+      new AIService({ db: deps.db, aiApiKey: deps.aiApiKey, accountId: getAccountId(p, baseAccountId) }).updateConfig(p as never),
+
+    accounts_create: async (p) =>
+      new AccountService(deps.db).create({
+        name: p.name as string,
+        igAccountId: p.igAccountId as string,
+        igUsername: (p.igUsername as string | undefined) ?? null,
+        metaAccessToken: p.metaAccessToken as string,
+        metaAppSecret: p.metaAppSecret as string,
+        enabled: p.enabled as boolean | undefined,
+      }),
+    accounts_update: async (p) =>
+      new AccountService(deps.db).update(p.id as string, {
+        name: p.name as string | undefined,
+        igAccountId: p.igAccountId as string | undefined,
+        igUsername: (p.igUsername as string | undefined) ?? null,
+        metaAccessToken: p.metaAccessToken as string | undefined,
+        metaAppSecret: p.metaAppSecret as string | undefined,
+        enabled: p.enabled as boolean | undefined,
+      }),
+    accounts_delete: async (p) => new AccountService(deps.db).delete(p.id as string),
   };
 }
 
@@ -142,26 +189,26 @@ const TOOL_DEFS: MCPToolDefinition[] = [
   {
     name: "contacts_list",
     description: "List all contacts",
-    inputSchema: { type: "object", properties: {} },
+    inputSchema: withAccountId({ type: "object", properties: {} }),
   },
   {
     name: "contacts_get",
     description: "Get a contact by ID",
-    inputSchema: {
+    inputSchema: withAccountId({
       type: "object",
       properties: { id: { type: "string", description: "Contact ID" } },
       required: ["id"],
-    },
+    }),
   },
   {
     name: "keyword_rules_list",
     description: "List all keyword auto-reply rules",
-    inputSchema: { type: "object", properties: {} },
+    inputSchema: withAccountId({ type: "object", properties: {} }),
   },
   {
     name: "keyword_rules_create",
     description: "Create a keyword auto-reply rule",
-    inputSchema: {
+    inputSchema: withAccountId({
       type: "object",
       properties: {
         keyword: { type: "string", description: "Keyword to match" },
@@ -169,26 +216,26 @@ const TOOL_DEFS: MCPToolDefinition[] = [
         responseText: { type: "string", description: "Auto-reply text" },
       },
       required: ["keyword", "matchType", "responseText"],
-    },
+    }),
   },
   {
     name: "keyword_rules_delete",
     description: "Delete a keyword rule by ID",
-    inputSchema: {
+    inputSchema: withAccountId({
       type: "object",
       properties: { id: { type: "string" } },
       required: ["id"],
-    },
+    }),
   },
   {
     name: "comment_triggers_list",
     description: "List all comment-to-DM triggers",
-    inputSchema: { type: "object", properties: {} },
+    inputSchema: withAccountId({ type: "object", properties: {} }),
   },
   {
     name: "comment_triggers_create",
     description: "Create a comment trigger (comment → DM)",
-    inputSchema: {
+    inputSchema: withAccountId({
       type: "object",
       properties: {
         dmResponseText: { type: "string", description: "DM text to send" },
@@ -196,26 +243,26 @@ const TOOL_DEFS: MCPToolDefinition[] = [
         keywordFilter: { type: "string", description: "Optional keyword" },
       },
       required: ["dmResponseText"],
-    },
+    }),
   },
   {
     name: "comment_triggers_delete",
     description: "Delete a comment trigger by ID",
-    inputSchema: {
+    inputSchema: withAccountId({
       type: "object",
       properties: { id: { type: "string" } },
       required: ["id"],
-    },
+    }),
   },
   {
     name: "scenarios_list",
     description: "List all step-DM scenarios",
-    inputSchema: { type: "object", properties: {} },
+    inputSchema: withAccountId({ type: "object", properties: {} }),
   },
   {
     name: "scenarios_create",
     description: "Create a scenario with steps",
-    inputSchema: {
+    inputSchema: withAccountId({
       type: "object",
       properties: {
         name: { type: "string" },
@@ -235,26 +282,26 @@ const TOOL_DEFS: MCPToolDefinition[] = [
         },
       },
       required: ["name", "triggerType", "steps"],
-    },
+    }),
   },
   {
     name: "scenarios_delete",
     description: "Delete a scenario by ID",
-    inputSchema: {
+    inputSchema: withAccountId({
       type: "object",
       properties: { id: { type: "string" } },
       required: ["id"],
-    },
+    }),
   },
   {
     name: "broadcasts_list",
     description: "List all broadcasts",
-    inputSchema: { type: "object", properties: {} },
+    inputSchema: withAccountId({ type: "object", properties: {} }),
   },
   {
     name: "broadcasts_create",
     description: "Create a broadcast message",
-    inputSchema: {
+    inputSchema: withAccountId({
       type: "object",
       properties: {
         title: { type: "string" },
@@ -264,26 +311,26 @@ const TOOL_DEFS: MCPToolDefinition[] = [
         scheduledAt: { type: "string", description: "ISO 8601 datetime" },
       },
       required: ["title", "messageText"],
-    },
+    }),
   },
   {
     name: "broadcasts_send",
     description: "Send a broadcast immediately",
-    inputSchema: {
+    inputSchema: withAccountId({
       type: "object",
       properties: { id: { type: "string" } },
       required: ["id"],
-    },
+    }),
   },
   {
     name: "scoring_rules_list",
     description: "List all scoring rules",
-    inputSchema: { type: "object", properties: {} },
+    inputSchema: withAccountId({ type: "object", properties: {} }),
   },
   {
     name: "scoring_rules_create",
     description: "Create a scoring rule",
-    inputSchema: {
+    inputSchema: withAccountId({
       type: "object",
       properties: {
         eventType: {
@@ -293,17 +340,17 @@ const TOOL_DEFS: MCPToolDefinition[] = [
         points: { type: "number", description: "Points to add (negative to subtract)" },
       },
       required: ["eventType", "points"],
-    },
+    }),
   },
   {
     name: "automations_list",
     description: "List all automation rules",
-    inputSchema: { type: "object", properties: {} },
+    inputSchema: withAccountId({ type: "object", properties: {} }),
   },
   {
     name: "automations_create",
     description: "Create an IF-THEN automation rule",
-    inputSchema: {
+    inputSchema: withAccountId({
       type: "object",
       properties: {
         name: { type: "string" },
@@ -323,17 +370,17 @@ const TOOL_DEFS: MCPToolDefinition[] = [
         },
       },
       required: ["name", "eventType", "actions"],
-    },
+    }),
   },
   {
     name: "tracked_links_list",
     description: "List all tracked links",
-    inputSchema: { type: "object", properties: {} },
+    inputSchema: withAccountId({ type: "object", properties: {} }),
   },
   {
     name: "tracked_links_create",
     description: "Create a tracked link (URL shortener with click tracking)",
-    inputSchema: {
+    inputSchema: withAccountId({
       type: "object",
       properties: {
         originalUrl: { type: "string" },
@@ -341,17 +388,17 @@ const TOOL_DEFS: MCPToolDefinition[] = [
         scenarioId: { type: "string" },
       },
       required: ["originalUrl"],
-    },
+    }),
   },
   {
     name: "forms_list",
     description: "List all DM forms",
-    inputSchema: { type: "object", properties: {} },
+    inputSchema: withAccountId({ type: "object", properties: {} }),
   },
   {
     name: "forms_create",
     description: "Create a DM-based form",
-    inputSchema: {
+    inputSchema: withAccountId({
       type: "object",
       properties: {
         name: { type: "string" },
@@ -369,17 +416,17 @@ const TOOL_DEFS: MCPToolDefinition[] = [
         thankYouMessage: { type: "string" },
       },
       required: ["name", "fields"],
-    },
+    }),
   },
   {
     name: "ai_config_get",
     description: "Get AI auto-reply configuration",
-    inputSchema: { type: "object", properties: {} },
+    inputSchema: withAccountId({ type: "object", properties: {} }),
   },
   {
     name: "ai_config_update",
     description: "Update AI auto-reply configuration",
-    inputSchema: {
+    inputSchema: withAccountId({
       type: "object",
       properties: {
         enabled: { type: "boolean" },
@@ -389,6 +436,53 @@ const TOOL_DEFS: MCPToolDefinition[] = [
         knowledgeBase: { type: "string" },
         maxTokens: { type: "number" },
       },
-    },
+    }),
+  },
+  {
+    name: "accounts_list",
+    description: "List all accounts",
+    inputSchema: withAccountId({ type: "object", properties: {} }),
+  },
+  {
+    name: "accounts_create",
+    description: "Create an account",
+    inputSchema: withAccountId({
+      type: "object",
+      properties: {
+        name: { type: "string" },
+        igAccountId: { type: "string" },
+        igUsername: { type: "string" },
+        metaAccessToken: { type: "string" },
+        metaAppSecret: { type: "string" },
+        enabled: { type: "boolean" },
+      },
+      required: ["name", "igAccountId", "metaAccessToken", "metaAppSecret"],
+    }),
+  },
+  {
+    name: "accounts_update",
+    description: "Update an account",
+    inputSchema: withAccountId({
+      type: "object",
+      properties: {
+        id: { type: "string" },
+        name: { type: "string" },
+        igAccountId: { type: "string" },
+        igUsername: { type: "string" },
+        metaAccessToken: { type: "string" },
+        metaAppSecret: { type: "string" },
+        enabled: { type: "boolean" },
+      },
+      required: ["id"],
+    }),
+  },
+  {
+    name: "accounts_delete",
+    description: "Delete an account",
+    inputSchema: withAccountId({
+      type: "object",
+      properties: { id: { type: "string" } },
+      required: ["id"],
+    }),
   },
 ];

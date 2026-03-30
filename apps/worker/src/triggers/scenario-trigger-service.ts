@@ -9,6 +9,7 @@ interface ScenarioTriggerDeps {
   db: D1Database;
   accessToken: string;
   igAccountId: string;
+  accountId?: string;
 }
 
 export class ScenarioTriggerService {
@@ -16,8 +17,9 @@ export class ScenarioTriggerService {
   private readonly scenarioService: ScenarioService;
 
   constructor(deps: ScenarioTriggerDeps) {
-    this.scenarioRepo = new ScenarioRepository(deps.db);
-    this.scenarioService = new ScenarioService(deps);
+    const accountId = deps.accountId ?? 'default';
+    this.scenarioRepo = new ScenarioRepository(deps.db, accountId);
+    this.scenarioService = new ScenarioService({ ...deps, accountId });
   }
 
   /** キーワードマッチ時にシナリオ登録を試みる */

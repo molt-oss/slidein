@@ -13,9 +13,9 @@ export class ScoringService {
   private readonly repo: ScoringRuleRepository;
   private readonly contactRepo: ContactRepository;
 
-  constructor(db: D1Database) {
-    this.repo = new ScoringRuleRepository(db);
-    this.contactRepo = new ContactRepository(db);
+  constructor(db: D1Database, accountId: string = 'default') {
+    this.repo = new ScoringRuleRepository(db, accountId);
+    this.contactRepo = new ContactRepository(db, accountId);
   }
 
   async listRules(): Promise<ScoringRule[]> {

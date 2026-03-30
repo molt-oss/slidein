@@ -18,59 +18,34 @@ import { conversionApi } from "./handlers/conversion-api-handler.js";
 import { formApi } from "./handlers/form-api-handler.js";
 import { deliverySettingsApi } from "./handlers/delivery-settings-api-handler.js";
 import { aiApi } from "./handlers/ai-api-handler.js";
+import { accountApi } from "./handlers/account-api-handler.js";
 import { mcpHandler } from "./handlers/mcp-handler.js";
 import { MessageService } from "./messaging/service.js";
 import { ScenarioService } from "./scenarios/service.js";
 import { BroadcastService } from "./broadcasts/service.js";
+import { AccountService } from "./accounts/service.js";
 
 const app = new Hono<{ Bindings: Env }>();
 
-// Health check
 app.get("/", (c) => c.json({ status: "ok", service: "slidein-worker" }));
 
-// Webhook ルート
 app.route("/", webhook);
-
-// 管理 API ルート
 app.route("/", api);
-
-// シナリオ API ルート
 app.route("/", scenarioApi);
-
-// ブロードキャスト API ルート
 app.route("/", broadcastApi);
-
-// スコアリング API ルート
 app.route("/", scoringApi);
-
-// 自動化ルール API ルート
 app.route("/", automationApi);
-
-// トラッキングリンク API + リダイレクトルート
 app.route("/", trackingApi);
-
-// Webhook OUT API ルート
 app.route("/", webhookOutApi);
-
-// CV計測 API ルート
 app.route("/", conversionApi);
-
-// フォーム API ルート
 app.route("/", formApi);
-
-// 配信時間帯設定 API ルート
 app.route("/", deliverySettingsApi);
-
-// AI設定 API ルート
 app.route("/", aiApi);
-
-// MCP エンドポイント
+app.route("/", accountApi);
 app.route("/", mcpHandler);
 
-// 404 ハンドラ
 app.notFound((c) => c.json({ error: "Not found" }, 404));
 
-// エラーハンドラ
 app.onError((err, c) => {
   structuredLog("error", "Unhandled error", {
     error: err.message,
@@ -90,25 +65,61 @@ export default {
     env: Env,
     ctx: ExecutionContext,
   ): Promise<void> {
-    const deps = {
-      db: env.DB,
-      accessToken: env.META_ACCESS_TOKEN,
-      igAccountId: env.IG_ACCOUNT_ID,
-    };
-
     ctx.waitUntil(
       (async () => {
-        structuredLog("info", "Cron trigger: processing pending messages");
-        const messageService = new MessageService(deps);
-        await messageService.processPendingMessages();
+        const accountService = new AccountService(env.DB);
+        const accounts = await accountService.listAll();
+        const enabledAccounts = accounts.filter(
+          (account) => account.enabled && account.id !== "default",
+        );
 
-        structuredLog("info", "Cron trigger: processing scenario steps");
-        const scenarioService = new ScenarioService(deps);
-        await scenarioService.processReadySteps();
+        const runForAccount = async (
+          accountId: string,
+          accessToken: string,
+          igAccountId: string,
+        ) => {
+          structuredLog("info", "Cron trigger: processing account", {
+            accountId,
+            igAccountId,
+          });
 
-        structuredLog("info", "Cron trigger: processing scheduled broadcasts");
-        const broadcastService = new BroadcastService(deps);
-        await broadcastService.processScheduled();
+          const deps = {
+            db: env.DB,
+            accessToken,
+            igAccountId,
+            accountId,
+          };
+
+          const messageService = new MessageService(deps);
+          await messageService.processPendingMessages();
+
+          const scenarioService = new ScenarioService(deps);
+          await scenarioService.processReadySteps();
+
+          const broadcastService = new BroadcastService(deps);
+          await broadcastService.processScheduled();
+        };
+
+        const accountRuns = [
+          runForAccount("default", env.META_ACCESS_TOKEN, env.IG_ACCOUNT_ID),
+          ...enabledAccounts.map((account) =>
+            runForAccount(
+              account.id,
+              account.metaAccessToken,
+              account.igAccountId,
+            )
+          ),
+        ];
+
+        for (const task of accountRuns) {
+          try {
+            await task;
+          } catch (error) {
+            structuredLog("error", "Cron trigger: account processing failed", {
+              error: error instanceof Error ? error.message : String(error),
+            });
+          }
+        }
       })(),
     );
   },

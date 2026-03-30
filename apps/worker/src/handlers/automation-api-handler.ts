@@ -10,21 +10,23 @@ import {
   UpdateAutomationRuleSchema,
 } from "../automations/types.js";
 import { bearerAuth } from "../middleware/auth.js";
+import { getAccountIdFromRequest } from "../accounts/http.js";
 
 const automationApi = new Hono<{ Bindings: Env }>();
 
 automationApi.use("/api/*", bearerAuth());
 
-function createService(env: Env): AutomationService {
+function createService(env: Env, accountId: string): AutomationService {
   return new AutomationService({
     db: env.DB,
     accessToken: env.META_ACCESS_TOKEN,
     igAccountId: env.IG_ACCOUNT_ID,
+    accountId,
   });
 }
 
 automationApi.get("/api/automations", async (c) => {
-  const service = createService(c.env);
+  const service = createService(c.env, getAccountIdFromRequest(c));
   const rules = await service.listAll();
   return c.json({ data: rules });
 });
@@ -37,7 +39,7 @@ automationApi.post("/api/automations", async (c) => {
     return c.json({ error: parseResult.error.flatten() }, 400);
   }
 
-  const service = createService(c.env);
+  const service = createService(c.env, getAccountIdFromRequest(c));
   const rule = await service.create(parseResult.data);
 
   structuredLog("info", "Automation rule created via API", {
@@ -55,7 +57,7 @@ automationApi.put("/api/automations/:id", async (c) => {
     return c.json({ error: parseResult.error.flatten() }, 400);
   }
 
-  const service = createService(c.env);
+  const service = createService(c.env, getAccountIdFromRequest(c));
   const updated = await service.update(id, parseResult.data);
 
   if (!updated) {
@@ -68,7 +70,7 @@ automationApi.put("/api/automations/:id", async (c) => {
 
 automationApi.delete("/api/automations/:id", async (c) => {
   const id = c.req.param("id");
-  const service = createService(c.env);
+  const service = createService(c.env, getAccountIdFromRequest(c));
   const deleted = await service.delete(id);
 
   if (!deleted) {
