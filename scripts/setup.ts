@@ -95,9 +95,11 @@ async function main() {
   // Auto-generated (no user input)
   const adminApiKey = randomUUID();
   const webhookVerifyToken = randomUUID();
+  const adminPassword = randomUUID().replace(/-/g, "").slice(0, 16);
 
   p.log.info(`🔑 Admin API key (auto-generated): ${adminApiKey}`);
   p.log.info(`🔐 Webhook verify token (auto-generated): ${webhookVerifyToken}`);
+  p.log.info(`🔒 Dashboard password (auto-generated): ${adminPassword}`);
   p.log.warn("↑ Save these — you'll need them!");
 
   // ── 3. D1 データベース（全自動） ────────────────────────────────
@@ -234,7 +236,7 @@ async function main() {
   // ── 7. Dashboard .env.local を自動生成 ───────────────────────────
   const WEB_DIR = resolve(ROOT, "apps/web");
   const envLocalPath = resolve(WEB_DIR, ".env.local");
-  const envContent = `API_URL=${workerUrl}\nAPI_KEY=${adminApiKey}\n`;
+  const envContent = `API_URL=${workerUrl}\nAPI_KEY=${adminApiKey}\nADMIN_PASSWORD=${adminPassword}\n`;
   writeFileSync(envLocalPath, envContent);
   p.log.success("apps/web/.env.local created automatically");
 
@@ -243,6 +245,7 @@ async function main() {
     [
       `Worker URL:          ${workerUrl}`,
       `Admin API key:       ${adminApiKey}`,
+      `Dashboard password:  ${adminPassword}`,
       `Webhook verify token: ${webhookVerifyToken}`,
       "",
       "Next steps:",
@@ -250,9 +253,11 @@ async function main() {
       `  2. Callback URL:  ${workerUrl}/webhook`,
       `  3. Verify token:  ${webhookVerifyToken}`,
       `  4. Subscribe to:  messages, messaging_postbacks, comments`,
+      `  5. Switch App Mode to "Live" (required for webhooks!)`,
       "",
       "Start dashboard:",
       "  cd apps/web && pnpm dev",
+      `  Login with password: ${adminPassword}`,
     ].join("\n"),
     "🎉 Setup complete!"
   );
