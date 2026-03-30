@@ -31,10 +31,13 @@ webhookOutApi.post("/api/webhook-endpoints", async (c) => {
   const service = new WebhookService(c.env.DB);
   const endpoint = await service.create(parseResult.data);
 
+  // secret をレスポンスから除外（GETと同様）
+  const { secret: _secret, ...safeEndpoint } = endpoint;
+
   structuredLog("info", "Webhook endpoint created via API", {
     endpointId: endpoint.id,
   });
-  return c.json({ data: endpoint }, 201);
+  return c.json({ data: safeEndpoint }, 201);
 });
 
 webhookOutApi.delete("/api/webhook-endpoints/:id", async (c) => {
