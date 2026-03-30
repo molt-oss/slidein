@@ -1,8 +1,12 @@
 /**
  * API Proxy Route Handler — サーバーサイドでWorker APIに転送
  * NEXT_PUBLIC_API_KEY を排除し、API_KEY をサーバーサイドのみで使用
+ *
+ * SECURITY: リクエストは ADMIN_PASSWORD ベースのセッショントークンで認証する。
+ * ダッシュボードの /api/auth/login で発行されたトークンを cookie で検証。
  */
 import { NextRequest, NextResponse } from "next/server";
+import { verifySessionToken } from "@/lib/auth";
 
 const API_URL = process.env.API_URL ?? "http://localhost:8787";
 const API_KEY = process.env.API_KEY ?? "";
@@ -11,6 +15,12 @@ async function proxyRequest(
   request: NextRequest,
   { params }: { params: Promise<{ path: string[] }> },
 ): Promise<NextResponse> {
+  // セッショントークン検証
+  const sessionToken = request.cookies.get("slidein_session")?.value;
+  if (!verifySessionToken(sessionToken)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { path } = await params;
   const targetPath = `/api/${path.join("/")}`;
   const url = `${API_URL}${targetPath}`;
