@@ -19,7 +19,8 @@ export class ScoringRuleRepository {
 
   async findAll(): Promise<ScoringRule[]> {
     const result = await this.db
-      .prepare("SELECT * FROM scoring_rules ORDER BY created_at DESC")
+      .prepare("SELECT * FROM scoring_rules WHERE account_id = ? ORDER BY created_at DESC")
+      .bind(this.accountId)
       .all<ScoringRuleRow>();
     return result.results.map(rowToScoringRule);
   }
@@ -27,9 +28,9 @@ export class ScoringRuleRepository {
   async findEnabledByEventType(eventType: ScoringEventType): Promise<ScoringRule[]> {
     const result = await this.db
       .prepare(
-        "SELECT * FROM scoring_rules WHERE event_type = ? AND enabled = 1",
+        "SELECT * FROM scoring_rules WHERE event_type = ? AND enabled = 1 AND account_id = ?",
       )
-      .bind(eventType)
+      .bind(eventType, this.accountId)
       .all<ScoringRuleRow>();
     return result.results.map(rowToScoringRule);
   }
@@ -37,9 +38,9 @@ export class ScoringRuleRepository {
   async create(eventType: ScoringEventType, points: number): Promise<ScoringRule> {
     const row = await this.db
       .prepare(
-        "INSERT INTO scoring_rules (event_type, points) VALUES (?, ?) RETURNING *",
+        "INSERT INTO scoring_rules (account_id, event_type, points) VALUES (?, ?, ?) RETURNING *",
       )
-      .bind(eventType, points)
+      .bind(this.accountId, eventType, points)
       .first<ScoringRuleRow>();
     if (!row) throw new Error("Failed to create scoring rule");
     return rowToScoringRule(row);
@@ -47,7 +48,7 @@ export class ScoringRuleRepository {
 
   async delete(id: string): Promise<boolean> {
     const result = await this.db
-      .prepare("DELETE FROM scoring_rules WHERE id = ?")
+      .prepare("DELETE FROM scoring_rules WHERE id = ? AND account_id = ?")
       .bind(id, this.accountId)
       .run();
     return result.meta.changes > 0;

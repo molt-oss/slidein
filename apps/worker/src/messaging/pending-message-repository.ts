@@ -4,6 +4,7 @@
 
 interface PendingMessageRow {
   id: string;
+  account_id: string;
   contact_id: string;
   recipient_ig_id: string;
   content: string;
@@ -46,10 +47,10 @@ export class PendingMessageRepository {
     const now = new Date().toISOString();
     await this.db
       .prepare(
-        `INSERT INTO pending_messages (contact_id, recipient_ig_id, content, scheduled_at, status)
-         VALUES (?, ?, ?, ?, 'pending')`,
+        `INSERT INTO pending_messages (account_id, contact_id, recipient_ig_id, content, scheduled_at, status)
+         VALUES (?, ?, ?, ?, ?, 'pending')`,
       )
-      .bind(contactId, recipientIgId, content, now)
+      .bind(this.accountId, contactId, recipientIgId, content, now)
       .run();
   }
 
@@ -58,11 +59,11 @@ export class PendingMessageRepository {
     const result = await this.db
       .prepare(
         `SELECT * FROM pending_messages
-         WHERE status = 'pending'
+         WHERE status = 'pending' AND account_id = ?
          ORDER BY scheduled_at ASC
          LIMIT ?`,
       )
-      .bind(limit)
+      .bind(this.accountId, limit)
       .all<PendingMessageRow>();
     return result.results.map(rowToPendingMessage);
   }
@@ -70,7 +71,7 @@ export class PendingMessageRepository {
   /** 送信済みにマーク */
   async markSent(id: string): Promise<void> {
     await this.db
-      .prepare("UPDATE pending_messages SET status = 'sent' WHERE id = ?")
+      .prepare("UPDATE pending_messages SET status = 'sent' WHERE id = ? AND account_id = ?")
       .bind(id, this.accountId)
       .run();
   }
@@ -78,7 +79,7 @@ export class PendingMessageRepository {
   /** 失敗にマーク */
   async markFailed(id: string): Promise<void> {
     await this.db
-      .prepare("UPDATE pending_messages SET status = 'failed' WHERE id = ?")
+      .prepare("UPDATE pending_messages SET status = 'failed' WHERE id = ? AND account_id = ?")
       .bind(id, this.accountId)
       .run();
   }

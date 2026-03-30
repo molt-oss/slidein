@@ -24,7 +24,8 @@ export class DeliverySettingsRepository {
 
   async get(): Promise<DeliverySettings> {
     const row = await this.db
-      .prepare("SELECT * FROM delivery_settings WHERE id = 'default'")
+      .prepare("SELECT * FROM delivery_settings WHERE account_id = ? LIMIT 1")
+      .bind(this.accountId)
       .first<DeliverySettingsRow>();
     if (!row) {
       return { id: "default", startHour: 9, endHour: 23, timezone: "Asia/Tokyo" };
@@ -37,9 +38,9 @@ export class DeliverySettingsRepository {
       .prepare(
         `UPDATE delivery_settings
          SET start_hour = ?, end_hour = ?, timezone = ?
-         WHERE id = 'default'`,
+         WHERE account_id = ?`,
       )
-      .bind(startHour, endHour, timezone)
+      .bind(startHour, endHour, timezone, this.accountId)
       .run();
     return this.get();
   }

@@ -22,8 +22,9 @@ function createScoringD1Mock() {
           idCounter++;
           const row = {
             id: `sr-${idCounter}`,
-            event_type: boundArgs[0],
-            points: boundArgs[1],
+            account_id: boundArgs[0],
+            event_type: boundArgs[1],
+            points: boundArgs[2],
             enabled: 1,
             created_at: new Date().toISOString(),
           };
@@ -41,14 +42,16 @@ function createScoringD1Mock() {
         // SELECT scoring_rules with event_type filter
         if (sql.includes("FROM scoring_rules") && sql.includes("event_type = ?")) {
           const eventType = boundArgs[0] as string;
+          const accountId = boundArgs[1] as string;
           const filtered = scoringRules.filter(
-            (r) => r.event_type === eventType && r.enabled === 1,
+            (r) => r.event_type === eventType && r.enabled === 1 && r.account_id === accountId,
           );
           return { results: filtered as unknown as T[] };
         }
         // SELECT all scoring_rules
         if (sql.includes("FROM scoring_rules")) {
-          return { results: scoringRules as unknown as T[] };
+          const accountId = boundArgs[0] as string;
+          return { results: scoringRules.filter((r) => r.account_id === accountId) as unknown as T[] };
         }
         return { results: [] };
       },

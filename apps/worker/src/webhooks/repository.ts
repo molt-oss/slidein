@@ -20,14 +20,16 @@ export class WebhookEndpointRepository {
 
   async findAll(): Promise<WebhookEndpoint[]> {
     const result = await this.db
-      .prepare("SELECT * FROM webhook_endpoints ORDER BY created_at DESC")
+      .prepare("SELECT * FROM webhook_endpoints WHERE account_id = ? ORDER BY created_at DESC")
+      .bind(this.accountId)
       .all<WebhookEndpointRow>();
     return result.results.map(rowToWebhookEndpoint);
   }
 
   async findEnabled(): Promise<WebhookEndpoint[]> {
     const result = await this.db
-      .prepare("SELECT * FROM webhook_endpoints WHERE enabled = 1")
+      .prepare("SELECT * FROM webhook_endpoints WHERE enabled = 1 AND account_id = ?")
+      .bind(this.accountId)
       .all<WebhookEndpointRow>();
     return result.results.map(rowToWebhookEndpoint);
   }
@@ -39,10 +41,10 @@ export class WebhookEndpointRepository {
   ): Promise<WebhookEndpoint> {
     const row = await this.db
       .prepare(
-        `INSERT INTO webhook_endpoints (url, events, secret)
-         VALUES (?, ?, ?) RETURNING *`,
+        `INSERT INTO webhook_endpoints (account_id, url, events, secret)
+         VALUES (?, ?, ?, ?) RETURNING *`,
       )
-      .bind(url, JSON.stringify(events), secret)
+      .bind(this.accountId, url, JSON.stringify(events), secret)
       .first<WebhookEndpointRow>();
     if (!row) throw new Error("Failed to create webhook endpoint");
     return rowToWebhookEndpoint(row);
@@ -50,7 +52,7 @@ export class WebhookEndpointRepository {
 
   async delete(id: string): Promise<boolean> {
     const result = await this.db
-      .prepare("DELETE FROM webhook_endpoints WHERE id = ?")
+      .prepare("DELETE FROM webhook_endpoints WHERE id = ? AND account_id = ?")
       .bind(id, this.accountId)
       .run();
     return result.meta.changes > 0;

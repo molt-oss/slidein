@@ -54,7 +54,8 @@ export class AutomationRuleRepository {
 
   async findAll(): Promise<AutomationRule[]> {
     const result = await this.db
-      .prepare("SELECT * FROM automation_rules ORDER BY created_at DESC")
+      .prepare("SELECT * FROM automation_rules WHERE account_id = ? ORDER BY created_at DESC")
+      .bind(this.accountId)
       .all<AutomationRuleRow>();
     return result.results
       .map(rowToAutomationRule)
@@ -63,8 +64,8 @@ export class AutomationRuleRepository {
 
   async findById(id: string): Promise<AutomationRule | null> {
     const row = await this.db
-      .prepare("SELECT * FROM automation_rules WHERE id = ?")
-      .bind(id)
+      .prepare("SELECT * FROM automation_rules WHERE id = ? AND account_id = ?")
+      .bind(id, this.accountId)
       .first<AutomationRuleRow>();
     return row ? rowToAutomationRule(row) : null;
   }
@@ -72,9 +73,9 @@ export class AutomationRuleRepository {
   async findEnabledByEventType(eventType: string): Promise<AutomationRule[]> {
     const result = await this.db
       .prepare(
-        "SELECT * FROM automation_rules WHERE event_type = ? AND enabled = 1",
+        "SELECT * FROM automation_rules WHERE event_type = ? AND enabled = 1 AND account_id = ?",
       )
-      .bind(eventType)
+      .bind(eventType, this.accountId)
       .all<AutomationRuleRow>();
     return result.results
       .map(rowToAutomationRule)
@@ -89,10 +90,10 @@ export class AutomationRuleRepository {
   ): Promise<AutomationRule> {
     const row = await this.db
       .prepare(
-        `INSERT INTO automation_rules (name, event_type, condition_json, actions_json)
-         VALUES (?, ?, ?, ?) RETURNING *`,
+        `INSERT INTO automation_rules (account_id, name, event_type, condition_json, actions_json)
+         VALUES (?, ?, ?, ?, ?) RETURNING *`,
       )
-      .bind(name, eventType, JSON.stringify(condition), JSON.stringify(actions))
+      .bind(this.accountId, name, eventType, JSON.stringify(condition), JSON.stringify(actions))
       .first<AutomationRuleRow>();
     if (!row) throw new Error("Failed to create automation rule");
     const rule = rowToAutomationRule(row);
@@ -123,7 +124,7 @@ export class AutomationRuleRepository {
       .prepare(
         `UPDATE automation_rules
          SET name = ?, event_type = ?, condition_json = ?, actions_json = ?, enabled = ?
-         WHERE id = ?`,
+         WHERE id = ? AND account_id = ?`,
       )
       .bind(
         name,
@@ -132,6 +133,7 @@ export class AutomationRuleRepository {
         JSON.stringify(actions),
         enabled ? 1 : 0,
         id,
+        this.accountId,
       )
       .run();
 
@@ -140,7 +142,7 @@ export class AutomationRuleRepository {
 
   async delete(id: string): Promise<boolean> {
     const result = await this.db
-      .prepare("DELETE FROM automation_rules WHERE id = ?")
+      .prepare("DELETE FROM automation_rules WHERE id = ? AND account_id = ?")
       .bind(id, this.accountId)
       .run();
     return result.meta.changes > 0;

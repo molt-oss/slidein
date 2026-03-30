@@ -28,15 +28,16 @@ export class ConversionGoalRepository {
 
   async findAll(): Promise<ConversionGoal[]> {
     const result = await this.db
-      .prepare("SELECT * FROM conversion_goals ORDER BY created_at DESC")
+      .prepare("SELECT * FROM conversion_goals WHERE account_id = ? ORDER BY created_at DESC")
+      .bind(this.accountId)
       .all<ConversionGoalRow>();
     return result.results.map(rowToGoal);
   }
 
   async findById(id: string): Promise<ConversionGoal | null> {
     const row = await this.db
-      .prepare("SELECT * FROM conversion_goals WHERE id = ?")
-      .bind(id)
+      .prepare("SELECT * FROM conversion_goals WHERE id = ? AND account_id = ?")
+      .bind(id, this.accountId)
       .first<ConversionGoalRow>();
     return row ? rowToGoal(row) : null;
   }
@@ -48,10 +49,10 @@ export class ConversionGoalRepository {
   ): Promise<ConversionGoal> {
     const row = await this.db
       .prepare(
-        `INSERT INTO conversion_goals (name, event_type, target_value)
-         VALUES (?, ?, ?) RETURNING *`,
+        `INSERT INTO conversion_goals (account_id, name, event_type, target_value)
+         VALUES (?, ?, ?, ?) RETURNING *`,
       )
-      .bind(name, eventType, targetValue ?? null)
+      .bind(this.accountId, name, eventType, targetValue ?? null)
       .first<ConversionGoalRow>();
     if (!row) throw new Error("Failed to create conversion goal");
     return rowToGoal(row);
@@ -59,7 +60,7 @@ export class ConversionGoalRepository {
 
   async delete(id: string): Promise<boolean> {
     const result = await this.db
-      .prepare("DELETE FROM conversion_goals WHERE id = ?")
+      .prepare("DELETE FROM conversion_goals WHERE id = ? AND account_id = ?")
       .bind(id, this.accountId)
       .run();
     return result.meta.changes > 0;
@@ -73,9 +74,13 @@ export class ConversionRepository {
     const row = await this.db
       .prepare(
         `INSERT INTO conversions (goal_id, contact_id)
-         VALUES (?, ?) RETURNING *`,
+         SELECT ?, ?
+         WHERE EXISTS (
+           SELECT 1 FROM conversion_goals WHERE id = ? AND account_id = ?
+         )
+         RETURNING *`,
       )
-      .bind(goalId, contactId)
+      .bind(goalId, contactId, goalId, this.accountId)
       .first<ConversionRow>();
     if (!row) throw new Error("Failed to record conversion");
     return rowToConversion(row);
@@ -83,8 +88,10 @@ export class ConversionRepository {
 
   async countByGoal(goalId: string): Promise<number> {
     const row = await this.db
-      .prepare("SELECT COUNT(*) as cnt FROM conversions WHERE goal_id = ?")
-      .bind(goalId)
+      .prepare(
+        "SELECT COUNT(*) as cnt FROM conversions c JOIN conversion_goals g ON g.id = c.goal_id WHERE c.goal_id = ? AND g.account_id = ?",
+      )
+      .bind(goalId, this.accountId)
       .first<{ cnt: number }>();
     return row?.cnt ?? 0;
   }
@@ -92,9 +99,9 @@ export class ConversionRepository {
   async countUniqueContactsByGoal(goalId: string): Promise<number> {
     const row = await this.db
       .prepare(
-        "SELECT COUNT(DISTINCT contact_id) as cnt FROM conversions WHERE goal_id = ?",
+        "SELECT COUNT(DISTINCT c.contact_id) as cnt FROM conversions c JOIN conversion_goals g ON g.id = c.goal_id WHERE c.goal_id = ? AND g.account_id = ?",
       )
-      .bind(goalId)
+      .bind(goalId, this.accountId)
       .first<{ cnt: number }>();
     return row?.cnt ?? 0;
   }

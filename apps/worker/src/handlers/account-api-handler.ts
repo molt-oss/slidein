@@ -33,14 +33,24 @@ function maskAccessToken(value: string): string {
   return `${"*".repeat(Math.max(4, value.length - 4))}${value.slice(-4)}`;
 }
 
+function maskSecret(value: string): string {
+  if (!value || value.length <= 8) return "****";
+  return `${value.slice(0, 4)}...${value.slice(-4)}`;
+}
+
+function maskAccount<T extends { metaAccessToken: string; metaAppSecret: string }>(account: T): T {
+  return {
+    ...account,
+    metaAccessToken: maskAccessToken(account.metaAccessToken),
+    metaAppSecret: maskSecret(account.metaAppSecret),
+  };
+}
+
 accountApi.get("/api/accounts", async (c) => {
   const service = createService(c.env);
   const accounts = await service.listAll();
   return c.json({
-    data: accounts.map((account) => ({
-      ...account,
-      metaAccessToken: maskAccessToken(account.metaAccessToken),
-    })),
+    data: accounts.map((account) => maskAccount(account)),
   });
 });
 
@@ -56,7 +66,7 @@ accountApi.post("/api/accounts", async (c) => {
   const account = await service.create(parseResult.data);
 
   structuredLog("info", "Account created via API", { accountId: account.id });
-  return c.json({ data: account }, 201);
+  return c.json({ data: maskAccount(account) }, 201);
 });
 
 accountApi.put("/api/accounts/:id", async (c) => {

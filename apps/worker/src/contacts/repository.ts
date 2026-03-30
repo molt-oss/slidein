@@ -29,15 +29,10 @@ export class ContactRepository {
   }
 
   async findByIgUserId(igUserId: string): Promise<Contact | null> {
-    const row = this.accountId === 'default'
-      ? await this.db
-          .prepare("SELECT * FROM contacts WHERE ig_user_id = ?")
-          .bind(igUserId)
-          .first<ContactRow>()
-      : await this.db
-          .prepare("SELECT * FROM contacts WHERE ig_user_id = ? AND account_id = ?")
-          .bind(igUserId, this.accountId)
-          .first<ContactRow>();
+    const row = await this.db
+      .prepare("SELECT * FROM contacts WHERE ig_user_id = ? AND account_id = ?")
+      .bind(igUserId, this.accountId)
+      .first<ContactRow>();
     return row ? rowToContact(row) : null;
   }
 
@@ -55,18 +50,6 @@ export class ContactRepository {
     displayName?: string | null,
   ): Promise<Contact> {
     const now = new Date().toISOString();
-    if (this.accountId === 'default') {
-      await this.db
-        .prepare(
-          "INSERT INTO contacts (ig_user_id, username, display_name, first_seen_at, last_message_at) VALUES (?, ?, ?, ?, ?)",
-        )
-        .bind(igUserId, username ?? null, displayName ?? null, now, now)
-        .run();
-
-      const created = await this.findByIgUserId(igUserId);
-      if (created) return created;
-    }
-
     const created = await this.db
       .prepare(
         "INSERT INTO contacts (account_id, ig_user_id, username, display_name, first_seen_at, last_message_at) VALUES (?, ?, ?, ?, ?, ?) RETURNING *",
@@ -75,16 +58,7 @@ export class ContactRepository {
       .first<ContactRow>();
 
     if (!created) {
-      return {
-        id: igUserId,
-        igUserId,
-        username: username ?? null,
-        displayName: displayName ?? null,
-        tags: [],
-        score: 0,
-        firstSeenAt: now,
-        lastMessageAt: now,
-      };
+      throw new Error("Failed to create contact");
     }
     return rowToContact(created);
   }

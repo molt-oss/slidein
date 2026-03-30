@@ -32,9 +32,10 @@ function createWebhookD1Mock() {
           idCounter++;
           const row = {
             id: `we-${idCounter}`,
-            url: boundArgs[0],
-            events: boundArgs[1],
-            secret: boundArgs[2],
+            account_id: boundArgs[0],
+            url: boundArgs[1],
+            events: boundArgs[2],
+            secret: boundArgs[3],
             enabled: 1,
             created_at: new Date().toISOString(),
           };
@@ -45,9 +46,11 @@ function createWebhookD1Mock() {
       },
       async all<T>(): Promise<{ results: T[] }> {
         if (sql.includes("FROM webhook_endpoints")) {
+          const accountId = boundArgs[0] as string;
+          const scoped = endpoints.filter((e) => e.account_id === accountId);
           const filtered = sql.includes("enabled = 1")
-            ? endpoints.filter((e) => e.enabled === 1)
-            : endpoints;
+            ? scoped.filter((e) => e.enabled === 1)
+            : scoped;
           return { results: filtered as unknown as T[] };
         }
         return { results: [] };

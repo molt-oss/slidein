@@ -40,10 +40,11 @@ function createTrackingD1Mock() {
           idCounter++;
           const row = {
             id: `tl-${idCounter}`,
-            original_url: boundArgs[0],
-            short_code: boundArgs[1],
-            contact_tag: boundArgs[2],
-            scenario_id: boundArgs[3],
+            account_id: boundArgs[0],
+            original_url: boundArgs[1],
+            short_code: boundArgs[2],
+            contact_tag: boundArgs[3],
+            scenario_id: boundArgs[4],
             click_count: 0,
             created_at: new Date().toISOString(),
           };
@@ -53,20 +54,23 @@ function createTrackingD1Mock() {
         // SELECT tracked_links by short_code
         if (sql.includes("FROM tracked_links WHERE short_code")) {
           const code = boundArgs[0] as string;
-          const found = trackedLinks.find((l) => l.short_code === code);
+          const accountId = boundArgs[1] as string;
+          const found = trackedLinks.find((l) => l.short_code === code && l.account_id === accountId);
           return found ? (found as unknown as T) : null;
         }
         // SELECT contacts by ig_user_id
         if (sql.includes("FROM contacts WHERE ig_user_id")) {
           const igId = boundArgs[0] as string;
+          const accountId = boundArgs[1] as string;
           const c = contacts.get(igId);
-          return c ? (c as unknown as T) : null;
+          return c && c.account_id === accountId ? (c as unknown as T) : null;
         }
         // SELECT contacts by id
         if (sql.includes("FROM contacts WHERE id")) {
           const id = boundArgs[0] as string;
+          const accountId = boundArgs[1] as string;
           for (const c of contacts.values()) {
-            if (c.id === id) return c as unknown as T;
+            if (c.id === id && c.account_id === accountId) return c as unknown as T;
           }
           return null;
         }
@@ -182,6 +186,7 @@ describe("TrackingService", () => {
     // コンタクト追加
     mock.contacts.set("ig-user-1", {
       id: "c1",
+      account_id: "default",
       ig_user_id: "ig-user-1",
       username: "testuser",
       display_name: null,

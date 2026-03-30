@@ -33,15 +33,16 @@ export class ScenarioRepository {
   constructor(private readonly db: D1Database, private readonly accountId: string = 'default') {}
 
   async findAll(): Promise<ScenarioWithSteps[]> {
-    // JOIN query to avoid N+1
     const rows = await this.db
       .prepare(
         `SELECT s.*, st.id as step_id, st.step_order, st.message_text,
                 st.delay_seconds, st.condition_tag, st.created_at as step_created_at
          FROM scenarios s
          LEFT JOIN scenario_steps st ON s.id = st.scenario_id
+         WHERE s.account_id = ?
          ORDER BY s.created_at DESC, st.step_order ASC`,
       )
+      .bind(this.accountId)
       .all<ScenarioRow & {
         step_id: string | null;
         step_order: number | null;
@@ -73,8 +74,8 @@ export class ScenarioRepository {
 
   async findById(id: string): Promise<ScenarioWithSteps | null> {
     const row = await this.db
-      .prepare("SELECT * FROM scenarios WHERE id = ?")
-      .bind(id)
+      .prepare("SELECT * FROM scenarios WHERE id = ? AND account_id = ?")
+      .bind(id, this.accountId)
       .first<ScenarioRow>();
     if (!row) return null;
     const steps = await this.findStepsByScenarioId(row.id);
@@ -88,9 +89,9 @@ export class ScenarioRepository {
     const rows = await this.db
       .prepare(
         `SELECT * FROM scenarios
-         WHERE trigger_type = ? AND trigger_value = ? AND enabled = 1`,
+         WHERE trigger_type = ? AND trigger_value = ? AND enabled = 1 AND account_id = ?`,
       )
-      .bind(triggerType, triggerValue)
+      .bind(triggerType, triggerValue, this.accountId)
       .all<ScenarioRow>();
     const result: ScenarioWithSteps[] = [];
     for (const row of rows.results) {
@@ -108,10 +109,10 @@ export class ScenarioRepository {
   ): Promise<Scenario> {
     const row = await this.db
       .prepare(
-        `INSERT INTO scenarios (name, description, trigger_type, trigger_value)
-         VALUES (?, ?, ?, ?) RETURNING *`,
+        `INSERT INTO scenarios (account_id, name, description, trigger_type, trigger_value)
+         VALUES (?, ?, ?, ?, ?) RETURNING *`,
       )
-      .bind(name, description ?? null, triggerType, triggerValue ?? null)
+      .bind(this.accountId, name, description ?? null, triggerType, triggerValue ?? null)
       .first<ScenarioRow>();
     if (!row) throw new Error("Failed to create scenario");
     return rowToScenario(row);
@@ -151,10 +152,10 @@ export class ScenarioRepository {
     }
     if (sets.length === 0) return this.findById(id);
     sets.push("updated_at = datetime('now')");
-    values.push(id);
+    values.push(id, this.accountId);
     const row = await this.db
       .prepare(
-        `UPDATE scenarios SET ${sets.join(", ")} WHERE id = ? RETURNING *`,
+        `UPDATE scenarios SET ${sets.join(", ")} WHERE id = ? AND account_id = ? RETURNING *`,
       )
       .bind(...values)
       .first<ScenarioRow>();
@@ -163,7 +164,7 @@ export class ScenarioRepository {
 
   async delete(id: string): Promise<boolean> {
     const result = await this.db
-      .prepare("DELETE FROM scenarios WHERE id = ?")
+      .prepare("DELETE FROM scenarios WHERE id = ? AND account_id = ?")
       .bind(id, this.accountId)
       .run();
     return (result.meta.changes ?? 0) > 0;
@@ -180,9 +181,11 @@ export class ScenarioRepository {
       .prepare(
         `INSERT INTO scenario_steps
          (scenario_id, step_order, message_text, delay_seconds, condition_tag)
-         VALUES (?, ?, ?, ?, ?) RETURNING *`,
+         SELECT ?, ?, ?, ?, ?
+         WHERE EXISTS (SELECT 1 FROM scenarios WHERE id = ? AND account_id = ?)
+         RETURNING *`,
       )
-      .bind(scenarioId, stepOrder, messageText, delaySeconds, conditionTag ?? null)
+      .bind(scenarioId, stepOrder, messageText, delaySeconds, conditionTag ?? null, scenarioId, this.accountId)
       .first<ScenarioStepRow>();
     if (!row) throw new Error("Failed to create scenario step");
     return rowToStep(row);
@@ -190,17 +193,19 @@ export class ScenarioRepository {
 
   async deleteStepsByScenarioId(scenarioId: string): Promise<void> {
     await this.db
-      .prepare("DELETE FROM scenario_steps WHERE scenario_id = ?")
-      .bind(scenarioId)
+      .prepare(
+        "DELETE FROM scenario_steps WHERE scenario_id = ? AND scenario_id IN (SELECT id FROM scenarios WHERE account_id = ?)",
+      )
+      .bind(scenarioId, this.accountId)
       .run();
   }
 
   async findStepsByScenarioId(scenarioId: string): Promise<ScenarioStep[]> {
     const result = await this.db
       .prepare(
-        "SELECT * FROM scenario_steps WHERE scenario_id = ? ORDER BY step_order ASC",
+        "SELECT st.* FROM scenario_steps st JOIN scenarios s ON s.id = st.scenario_id WHERE st.scenario_id = ? AND s.account_id = ? ORDER BY st.step_order ASC",
       )
-      .bind(scenarioId)
+      .bind(scenarioId, this.accountId)
       .all<ScenarioStepRow>();
     return result.results.map(rowToStep);
   }

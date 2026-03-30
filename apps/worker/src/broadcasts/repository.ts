@@ -24,15 +24,16 @@ export class BroadcastRepository {
 
   async findAll(): Promise<Broadcast[]> {
     const result = await this.db
-      .prepare("SELECT * FROM broadcasts ORDER BY created_at DESC")
+      .prepare("SELECT * FROM broadcasts WHERE account_id = ? ORDER BY created_at DESC")
+      .bind(this.accountId)
       .all<BroadcastRow>();
     return result.results.map(rowToBroadcast);
   }
 
   async findById(id: string): Promise<Broadcast | null> {
     const row = await this.db
-      .prepare("SELECT * FROM broadcasts WHERE id = ?")
-      .bind(id)
+      .prepare("SELECT * FROM broadcasts WHERE id = ? AND account_id = ?")
+      .bind(id, this.accountId)
       .first<BroadcastRow>();
     return row ? rowToBroadcast(row) : null;
   }
@@ -40,9 +41,9 @@ export class BroadcastRepository {
   async findScheduledReady(now: string): Promise<Broadcast[]> {
     const result = await this.db
       .prepare(
-        "SELECT * FROM broadcasts WHERE status = 'scheduled' AND scheduled_at <= ?",
+        "SELECT * FROM broadcasts WHERE status = 'scheduled' AND scheduled_at <= ? AND account_id = ?",
       )
-      .bind(now)
+      .bind(now, this.accountId)
       .all<BroadcastRow>();
     return result.results.map(rowToBroadcast);
   }
@@ -57,10 +58,10 @@ export class BroadcastRepository {
     const status = scheduledAt ? "scheduled" : "draft";
     const row = await this.db
       .prepare(
-        `INSERT INTO broadcasts (title, message_text, target_type, target_value, status, scheduled_at)
-         VALUES (?, ?, ?, ?, ?, ?) RETURNING *`,
+        `INSERT INTO broadcasts (account_id, title, message_text, target_type, target_value, status, scheduled_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING *`,
       )
-      .bind(title, messageText, targetType, targetValue, status, scheduledAt)
+      .bind(this.accountId, title, messageText, targetType, targetValue, status, scheduledAt)
       .first<BroadcastRow>();
     if (!row) throw new Error("Failed to create broadcast");
     return rowToBroadcast(row);
@@ -71,28 +72,28 @@ export class BroadcastRepository {
     status: Broadcast["status"],
   ): Promise<void> {
     await this.db
-      .prepare("UPDATE broadcasts SET status = ? WHERE id = ?")
-      .bind(status, id)
+      .prepare("UPDATE broadcasts SET status = ? WHERE id = ? AND account_id = ?")
+      .bind(status, id, this.accountId)
       .run();
   }
 
   async incrementSentCount(id: string): Promise<void> {
     await this.db
-      .prepare("UPDATE broadcasts SET sent_count = sent_count + 1 WHERE id = ?")
+      .prepare("UPDATE broadcasts SET sent_count = sent_count + 1 WHERE id = ? AND account_id = ?")
       .bind(id, this.accountId)
       .run();
   }
 
   async incrementFailedCount(id: string): Promise<void> {
     await this.db
-      .prepare("UPDATE broadcasts SET failed_count = failed_count + 1 WHERE id = ?")
+      .prepare("UPDATE broadcasts SET failed_count = failed_count + 1 WHERE id = ? AND account_id = ?")
       .bind(id, this.accountId)
       .run();
   }
 
   async delete(id: string): Promise<boolean> {
     const result = await this.db
-      .prepare("DELETE FROM broadcasts WHERE id = ?")
+      .prepare("DELETE FROM broadcasts WHERE id = ? AND account_id = ?")
       .bind(id, this.accountId)
       .run();
     return result.meta.changes > 0;

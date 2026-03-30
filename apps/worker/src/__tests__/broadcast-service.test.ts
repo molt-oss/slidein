@@ -40,12 +40,13 @@ function createBroadcastD1Mock() {
           const id = `bc-${idCounter}`;
           const row = {
             id,
-            title: boundArgs[0],
-            message_text: boundArgs[1],
-            target_type: boundArgs[2],
-            target_value: boundArgs[3],
-            status: boundArgs[4],
-            scheduled_at: boundArgs[5],
+            account_id: boundArgs[0],
+            title: boundArgs[1],
+            message_text: boundArgs[2],
+            target_type: boundArgs[3],
+            target_value: boundArgs[4],
+            status: boundArgs[5],
+            scheduled_at: boundArgs[6],
             sent_count: 0,
             failed_count: 0,
             created_at: new Date().toISOString(),
@@ -56,17 +57,19 @@ function createBroadcastD1Mock() {
         // SELECT broadcast by id
         if (sql.includes("FROM broadcasts WHERE id")) {
           const id = boundArgs[0] as string;
+          const accountId = boundArgs[1] as string;
           const row = broadcasts.get(id);
-          return row ? (row as unknown as T) : null;
+          return row && row.account_id === accountId ? (row as unknown as T) : null;
         }
         // Messages RETURNING
         if (sql.includes("INTO messages") && sql.includes("RETURNING")) {
           return {
             id: `msg-${++idCounter}`,
-            contact_id: boundArgs[0],
-            direction: boundArgs[1],
-            content: boundArgs[2],
-            ig_message_id: boundArgs[3],
+            account_id: boundArgs[0],
+            contact_id: boundArgs[1],
+            direction: boundArgs[2],
+            content: boundArgs[3],
+            ig_message_id: boundArgs[4],
             created_at: new Date().toISOString(),
           } as unknown as T;
         }
@@ -75,11 +78,14 @@ function createBroadcastD1Mock() {
       async all<T>(): Promise<{ results: T[] }> {
         // SELECT contacts
         if (sql.includes("FROM contacts")) {
-          return { results: contacts as unknown as T[] };
+          const accountId = boundArgs[0] as string;
+          const filtered = contacts.filter((contact) => (contact.account_id ?? "default") === accountId);
+          return { results: filtered as unknown as T[] };
         }
         // SELECT broadcasts
         if (sql.includes("FROM broadcasts")) {
-          return { results: [...broadcasts.values()] as unknown as T[] };
+          const accountId = boundArgs[0] as string;
+          return { results: [...broadcasts.values()].filter((broadcast) => broadcast.account_id === accountId) as unknown as T[] };
         }
         return { results: [] };
       },
@@ -87,18 +93,21 @@ function createBroadcastD1Mock() {
         // UPDATE broadcasts
         if (sql.includes("UPDATE broadcasts SET status")) {
           const id = boundArgs[1] as string;
+          const accountId = boundArgs[2] as string;
           const row = broadcasts.get(id);
-          if (row) row.status = boundArgs[0];
+          if (row && row.account_id === accountId) row.status = boundArgs[0];
         }
         if (sql.includes("sent_count = sent_count + 1")) {
           const id = boundArgs[0] as string;
+          const accountId = boundArgs[1] as string;
           const row = broadcasts.get(id);
-          if (row) row.sent_count = (row.sent_count as number) + 1;
+          if (row && row.account_id === accountId) row.sent_count = (row.sent_count as number) + 1;
         }
         if (sql.includes("failed_count = failed_count + 1")) {
           const id = boundArgs[0] as string;
+          const accountId = boundArgs[1] as string;
           const row = broadcasts.get(id);
-          if (row) row.failed_count = (row.failed_count as number) + 1;
+          if (row && row.account_id === accountId) row.failed_count = (row.failed_count as number) + 1;
         }
         return { meta: { changes: 1 } };
       },
@@ -128,8 +137,8 @@ describe("BroadcastService", () => {
 
     // 2人のコンタクトを追加
     mock.contacts.push(
-      { id: "c1", ig_user_id: "ig1", username: "user1", display_name: null, tags: "[]", score: 0, first_seen_at: now, last_message_at: now },
-      { id: "c2", ig_user_id: "ig2", username: "user2", display_name: null, tags: "[]", score: 0, first_seen_at: now, last_message_at: now },
+      { id: "c1", account_id: "default", ig_user_id: "ig1", username: "user1", display_name: null, tags: "[]", score: 0, first_seen_at: now, last_message_at: now },
+      { id: "c2", account_id: "default", ig_user_id: "ig2", username: "user2", display_name: null, tags: "[]", score: 0, first_seen_at: now, last_message_at: now },
     );
 
     const service = new BroadcastService({
@@ -159,8 +168,8 @@ describe("BroadcastService", () => {
     const now = new Date().toISOString();
 
     mock.contacts.push(
-      { id: "c1", ig_user_id: "ig1", username: "user1", display_name: null, tags: '["vip"]', score: 0, first_seen_at: now, last_message_at: now },
-      { id: "c2", ig_user_id: "ig2", username: "user2", display_name: null, tags: '[]', score: 0, first_seen_at: now, last_message_at: now },
+      { id: "c1", account_id: "default", ig_user_id: "ig1", username: "user1", display_name: null, tags: '["vip"]', score: 0, first_seen_at: now, last_message_at: now },
+      { id: "c2", account_id: "default", ig_user_id: "ig2", username: "user2", display_name: null, tags: '[]', score: 0, first_seen_at: now, last_message_at: now },
     );
 
     const service = new BroadcastService({

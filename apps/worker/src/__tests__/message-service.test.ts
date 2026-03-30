@@ -41,6 +41,7 @@ function createIntegrationD1Mock(opts: {
     string,
     {
       id: string;
+      account_id?: string;
       ig_user_id: string;
       username: string | null;
       display_name: string | null;
@@ -75,10 +76,29 @@ function createIntegrationD1Mock(opts: {
       },
       async first<T>(): Promise<T | null> {
         // Contacts
-        if (sql.includes("FROM contacts")) {
+        if (sql.includes("FROM contacts WHERE ig_user_id")) {
           const igId = boundArgs[0] as string;
+          const accountId = boundArgs[1] as string;
           const c = contacts.get(igId);
-          return c ? (c as unknown as T) : null;
+          return c && (c.account_id ?? "default") === accountId ? (c as unknown as T) : null;
+        }
+        // Contact INSERT RETURNING
+        if (sql.includes("INTO contacts") && sql.includes("RETURNING")) {
+          const accountId = boundArgs[0] as string;
+          const igId = boundArgs[1] as string;
+          const now = new Date().toISOString();
+          const contact = {
+            id: `contact-${igId}`,
+            account_id: accountId,
+            ig_user_id: igId,
+            username: boundArgs[2] as string | null,
+            display_name: boundArgs[3] as string | null,
+            tags: "[]",
+            first_seen_at: now,
+            last_message_at: now,
+          };
+          contacts.set(igId, contact);
+          return contact as unknown as T;
         }
         // Rate limiter UPDATE RETURNING
         if (
@@ -96,10 +116,11 @@ function createIntegrationD1Mock(opts: {
           msgCounter++;
           const msg = {
             id: `msg-${msgCounter}`,
-            contact_id: boundArgs[0] as string,
-            direction: boundArgs[1] as string,
-            content: boundArgs[2] as string,
-            ig_message_id: boundArgs[3] as string | null,
+            account_id: boundArgs[0] as string,
+            contact_id: boundArgs[1] as string,
+            direction: boundArgs[2] as string,
+            content: boundArgs[3] as string,
+            ig_message_id: boundArgs[4] as string | null,
             created_at: new Date().toISOString(),
           };
           messages.push(msg);
@@ -110,8 +131,9 @@ function createIntegrationD1Mock(opts: {
       async all<T>(): Promise<{ results: T[] }> {
         // Keyword rules
         if (sql.includes("keyword_rules")) {
+          const accountId = boundArgs[0] as string;
           return {
-            results: (opts.keywordRules ?? []) as unknown as T[],
+            results: (opts.keywordRules ?? []).map((rule) => ({ account_id: accountId, ...rule })) as unknown as T[],
           };
         }
         // Pending messages
@@ -121,26 +143,12 @@ function createIntegrationD1Mock(opts: {
         return { results: [] as T[] };
       },
       async run(): Promise<{ meta: { changes: number } }> {
-        // Contact INSERT
-        if (sql.includes("INTO contacts")) {
-          const igId = boundArgs[0] as string;
-          const now = new Date().toISOString();
-          contacts.set(igId, {
-            id: `contact-${igId}`,
-            ig_user_id: igId,
-            username: null,
-            display_name: null,
-            tags: "[]",
-            first_seen_at: now,
-            last_message_at: now,
-          });
-          return { meta: { changes: 1 } };
-        }
         // Contact UPDATE last_message_at
         if (sql.includes("UPDATE contacts")) {
           const igId = boundArgs[1] as string;
+          const accountId = boundArgs[2] as string;
           const c = contacts.get(igId);
-          if (c) c.last_message_at = new Date().toISOString();
+          if (c && (c.account_id ?? "default") === accountId) c.last_message_at = new Date().toISOString();
           return { meta: { changes: 1 } };
         }
         // Rate limit INSERT

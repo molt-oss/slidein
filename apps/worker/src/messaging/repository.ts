@@ -24,16 +24,6 @@ export class MessageRepository {
     content: string,
     igMessageId?: string | null,
   ): Promise<Message> {
-    if (this.accountId === 'default') {
-      const result = await this.db
-        .prepare(
-          "INSERT INTO messages (contact_id, direction, content, ig_message_id) VALUES (?, ?, ?, ?) RETURNING *",
-        )
-        .bind(contactId, direction, content, igMessageId ?? null)
-        .first<MessageRow>();
-      if (result) return rowToMessage(result);
-    }
-
     const result = await this.db
       .prepare(
         "INSERT INTO messages (account_id, contact_id, direction, content, ig_message_id) VALUES (?, ?, ?, ?, ?) RETURNING *",

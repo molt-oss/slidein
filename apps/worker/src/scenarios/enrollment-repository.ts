@@ -29,9 +29,11 @@ export class EnrollmentRepository {
       .prepare(
         `INSERT INTO scenario_enrollments
          (contact_id, scenario_id, current_step_order, status, next_send_at)
-         VALUES (?, ?, 1, 'active', ?) RETURNING *`,
+         SELECT ?, ?, 1, 'active', ?
+         WHERE EXISTS (SELECT 1 FROM scenarios WHERE id = ? AND account_id = ?)
+         RETURNING *`,
       )
-      .bind(contactId, scenarioId, nextSendAt)
+      .bind(contactId, scenarioId, nextSendAt, scenarioId, this.accountId)
       .first<ScenarioEnrollmentRow>();
     if (!row) throw new Error("Failed to enroll contact");
     return rowToEnrollment(row);
@@ -46,9 +48,9 @@ export class EnrollmentRepository {
       .prepare(
         `UPDATE scenario_enrollments
          SET current_step_order = ?, next_send_at = ?, updated_at = datetime('now')
-         WHERE id = ?`,
+         WHERE id = ? AND scenario_id IN (SELECT id FROM scenarios WHERE account_id = ?)`,
       )
-      .bind(nextStepOrder, nextSendAt, id)
+      .bind(nextStepOrder, nextSendAt, id, this.accountId)
       .run();
   }
 
@@ -57,7 +59,7 @@ export class EnrollmentRepository {
       .prepare(
         `UPDATE scenario_enrollments
          SET status = 'completed', next_send_at = NULL, updated_at = datetime('now')
-         WHERE id = ?`,
+         WHERE id = ? AND scenario_id IN (SELECT id FROM scenarios WHERE account_id = ?)`,
       )
       .bind(id, this.accountId)
       .run();
@@ -68,7 +70,7 @@ export class EnrollmentRepository {
       .prepare(
         `UPDATE scenario_enrollments
          SET status = 'cancelled', next_send_at = NULL, updated_at = datetime('now')
-         WHERE id = ?`,
+         WHERE id = ? AND scenario_id IN (SELECT id FROM scenarios WHERE account_id = ?)`,
       )
       .bind(id, this.accountId)
       .run();
@@ -78,10 +80,12 @@ export class EnrollmentRepository {
     const result = await this.db
       .prepare(
         `SELECT * FROM scenario_enrollments
-         WHERE status = 'active' AND next_send_at <= ?
+         WHERE status = 'active'
+           AND next_send_at <= ?
+           AND scenario_id IN (SELECT id FROM scenarios WHERE account_id = ?)
          ORDER BY next_send_at ASC LIMIT 50`,
       )
-      .bind(now)
+      .bind(now, this.accountId)
       .all<ScenarioEnrollmentRow>();
     return result.results.map(rowToEnrollment);
   }
@@ -90,9 +94,11 @@ export class EnrollmentRepository {
     const result = await this.db
       .prepare(
         `SELECT * FROM scenario_enrollments
-         WHERE scenario_id = ? ORDER BY enrolled_at DESC`,
+         WHERE scenario_id = ?
+           AND scenario_id IN (SELECT id FROM scenarios WHERE account_id = ?)
+         ORDER BY enrolled_at DESC`,
       )
-      .bind(scenarioId)
+      .bind(scenarioId, this.accountId)
       .all<ScenarioEnrollmentRow>();
     return result.results.map(rowToEnrollment);
   }
@@ -104,9 +110,10 @@ export class EnrollmentRepository {
     const row = await this.db
       .prepare(
         `SELECT * FROM scenario_enrollments
-         WHERE contact_id = ? AND scenario_id = ? AND status = 'active'`,
+         WHERE contact_id = ? AND scenario_id = ? AND status = 'active'
+           AND scenario_id IN (SELECT id FROM scenarios WHERE account_id = ?)` ,
       )
-      .bind(contactId, scenarioId)
+      .bind(contactId, scenarioId, this.accountId)
       .first<ScenarioEnrollmentRow>();
     return row ? rowToEnrollment(row) : null;
   }

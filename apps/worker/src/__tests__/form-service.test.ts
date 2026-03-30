@@ -42,9 +42,10 @@ function createFormD1Mock() {
           idCounter++;
           const row = {
             id: `f-${idCounter}`,
-            name: boundArgs[0],
-            fields: boundArgs[1],
-            thank_you_message: boundArgs[2],
+            account_id: boundArgs[0],
+            name: boundArgs[1],
+            fields: boundArgs[2],
+            thank_you_message: boundArgs[3],
             created_at: new Date().toISOString(),
           };
           forms.push(row);
@@ -53,6 +54,10 @@ function createFormD1Mock() {
         // INSERT form_responses RETURNING
         if (sql.includes("INTO form_responses") && sql.includes("RETURNING")) {
           idCounter++;
+          const formId = boundArgs[0] as string;
+          const accountId = boundArgs[3] as string;
+          const form = forms.find((f) => f.id === formId && f.account_id === accountId);
+          if (!form) return null;
           const row = {
             id: `fr-${idCounter}`,
             form_id: boundArgs[0],
@@ -68,22 +73,26 @@ function createFormD1Mock() {
         // SELECT forms by id
         if (sql.includes("FROM forms WHERE id")) {
           const id = boundArgs[0] as string;
-          const f = forms.find((f) => f.id === id);
+          const accountId = boundArgs[1] as string;
+          const f = forms.find((f) => f.id === id && f.account_id === accountId);
           return f ? (f as unknown as T) : null;
         }
         // SELECT active form_responses
         if (sql.includes("FROM form_responses") && sql.includes("completed_at IS NULL")) {
           const contactId = boundArgs[0] as string;
-          const active = formResponses.find(
-            (r) => r.contact_id === contactId && r.completed_at === null,
-          );
+          const accountId = boundArgs[1] as string;
+          const active = formResponses.find((r) => {
+            const form = forms.find((f) => f.id === r.form_id);
+            return r.contact_id === contactId && r.completed_at === null && form?.account_id === accountId;
+          });
           return active ? (active as unknown as T) : null;
         }
         // SELECT contacts by id
         if (sql.includes("FROM contacts WHERE id")) {
           const id = boundArgs[0] as string;
+          const accountId = boundArgs[1] as string;
           for (const c of contacts.values()) {
-            if (c.id === id) return c as unknown as T;
+            if (c.id === id && (c.account_id ?? "default") === accountId) return c as unknown as T;
           }
           return null;
         }
@@ -91,11 +100,16 @@ function createFormD1Mock() {
       },
       async all<T>(): Promise<{ results: T[] }> {
         if (sql.includes("FROM forms")) {
-          return { results: forms as unknown as T[] };
+          const accountId = boundArgs[0] as string;
+          return { results: forms.filter((f) => f.account_id === accountId) as unknown as T[] };
         }
         if (sql.includes("FROM form_responses")) {
           const formId = boundArgs[0] as string;
-          const filtered = formResponses.filter((r) => r.form_id === formId);
+          const accountId = boundArgs[1] as string;
+          const filtered = formResponses.filter((r) => {
+            const form = forms.find((f) => f.id === r.form_id);
+            return r.form_id === formId && form?.account_id === accountId;
+          });
           return { results: filtered as unknown as T[] };
         }
         return { results: [] };
@@ -106,7 +120,11 @@ function createFormD1Mock() {
           const responses = boundArgs[0] as string;
           const nextIndex = boundArgs[1] as number;
           const id = boundArgs[2] as string;
-          const r = formResponses.find((r) => r.id === id);
+          const accountId = boundArgs[3] as string;
+          const r = formResponses.find((r) => {
+            const form = forms.find((f) => f.id === r.form_id);
+            return r.id === id && form?.account_id === accountId;
+          });
           if (r) {
             r.responses = responses;
             r.current_field_index = nextIndex;
@@ -115,7 +133,11 @@ function createFormD1Mock() {
         // Complete form_response
         if (sql.includes("UPDATE form_responses") && sql.includes("completed_at")) {
           const id = boundArgs[0] as string;
-          const r = formResponses.find((r) => r.id === id);
+          const accountId = boundArgs[1] as string;
+          const r = formResponses.find((r) => {
+            const form = forms.find((f) => f.id === r.form_id);
+            return r.id === id && form?.account_id === accountId;
+          });
           if (r) {
             r.completed_at = new Date().toISOString();
           }
@@ -123,7 +145,8 @@ function createFormD1Mock() {
         // DELETE
         if (sql.includes("DELETE FROM forms")) {
           const id = boundArgs[0] as string;
-          const idx = forms.findIndex((f) => f.id === id);
+          const accountId = boundArgs[1] as string;
+          const idx = forms.findIndex((f) => f.id === id && f.account_id === accountId);
           if (idx >= 0) {
             forms.splice(idx, 1);
             return { meta: { changes: 1 } };
@@ -159,6 +182,7 @@ describe("FormService", () => {
 
     mock.contacts.set("ig-user-1", {
       id: "c1",
+      account_id: "default",
       ig_user_id: "ig-user-1",
       username: "testuser",
       display_name: null,

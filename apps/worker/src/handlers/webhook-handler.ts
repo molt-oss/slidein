@@ -63,6 +63,16 @@ webhook.post("/webhook", async (c) => {
 
   const rawBody = await c.req.text();
 
+  const isValid = await verifyWebhookSignature(
+    rawBody,
+    signature,
+    c.env.META_APP_SECRET,
+  );
+  if (!isValid) {
+    structuredLog("warn", "Invalid webhook signature");
+    return c.text("Unauthorized", 401);
+  }
+
   let parsed: unknown;
   try {
     parsed = JSON.parse(rawBody);
@@ -79,19 +89,6 @@ webhook.post("/webhook", async (c) => {
     recipientIgAccountId,
     c.env,
   );
-
-  const isValid = await verifyWebhookSignature(
-    rawBody,
-    signature,
-    credentials.appSecret,
-  );
-  if (!isValid) {
-    structuredLog("warn", "Invalid webhook signature", {
-      recipientIgAccountId,
-      accountId: credentials.accountId,
-    });
-    return c.text("Unauthorized", 401);
-  }
 
   structuredLog("info", "Webhook payload received", {
     objectType: (parsed as Record<string, unknown>).object,
@@ -172,4 +169,4 @@ async function processWebhookPayload(
   }
 }
 
-export { webhook };
+export { webhook, extractRecipientIgAccountId };
