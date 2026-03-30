@@ -85,7 +85,7 @@ accountApi.put("/api/accounts/:id", async (c) => {
   }
 
   structuredLog("info", "Account updated via API", { accountId: account.id });
-  return c.json({ data: account });
+  return c.json({ data: maskAccount(account) });
 });
 
 accountApi.delete("/api/accounts/:id", async (c) => {
